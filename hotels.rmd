@@ -72,4 +72,4 @@ hist(hotels$stays_in_week_nights,xlim=c(0, 15), breaks = 50)
 barplot(table(hotels$country))
 length(table(hotels$country))
 ```
-
+#Hope this works
