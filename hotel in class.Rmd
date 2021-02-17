@@ -1,0 +1,82 @@
+---
+title: "inclass2.10.21"
+author: "Kendall Cohen, Mihir Zaveri, Jenna Probst, Aman Saxena "
+date: "2/10/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+hotels <- read.csv("hotel_bookings.csv")
+
+#str(hotels)
+hotels$is_canceled <- as.factor(hotels$is_canceled)
+
+hotels$hotel <- as.factor(hotels$hotel)
+
+hotels$arrival_date_year <- as.factor(hotels$arrival_date_year)
+
+hotels$arrival_date_month <- as.factor(hotels$arrival_date_month)
+
+hotels$arrival_date_week_number <- as.factor(hotels$arrival_date_week_number)
+
+hotels$is_repeated_guest <- as.factor(hotels$is_repeated_guest)
+
+hotels$reservation_status <- as.factor(hotels$reservation_status)
+
+hotels$customer_type <- as.factor(hotels$customer_type)
+
+hotels$deposit_type <- as.factor(hotels$deposit_type)
+
+hotels$reserved_room_type <- as.factor(hotels$reserved_room_type)
+
+
+hotels$assigned_room_type <- as.factor(hotels$assigned_room_type)
+
+hotels$distribution_channel <- as.factor(hotels$distribution_channel)
+
+hotels$market_segment <- as.factor(hotels$market_segment)
+
+hotels$country <- as.factor(hotels$country)
+
+hotels$meal <- as.factor(hotels$meal)
+
+hotels$company <- as.factor(hotels$company)
+
+hotels$agent <- as.integer(hotels$agent)
+
+#hotels$has_agent <- ifelse((hotels$agent) >=0, 1, 0)
+
+hotels$has_agent <- ifelse(is.na(hotels$agent) == TRUE, 0, 1)
+
+summary(hotels$has_agent)
+#hotels$has_agent <- as.factor(hotels$has_agent)
+
+
+hotels$arrival_date_day_of_month <- as.factor(hotels$arrival_date_day_of_month)
+```
+
+```{r}
+# What percentage of people cancel based on if they have an agent 
+#prop.table(table(hotels$is_canceled, hotels$has_agent))
+
+# What percentage of people cancel 
+
+prop.table(table(hotels$is_canceled))
+
+```
+1 represents a booking that was canceled. 37% of bookings were canceled. 
+
+```{r}
+# What times of the year are busiest 
+plot(hotels$arrival_date_month)
+
+hotels$seasons <- ifelse(hotels$arrival_date_month == "December" | hotels$arrival_date_month == "January" | hotels$arrival_date_month =="February", "Winter", ifelse(hotels$arrival_date_month == "March" | hotels$arrival_date_month == "April" | hotels$arrival_date_month ==  "May",  "Spring", "Summer"))
+
+library("ggplot2")
+ggplot(hotels, aes(seasons)) + geom_bar()
+```
+
