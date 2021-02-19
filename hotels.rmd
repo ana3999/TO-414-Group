@@ -72,4 +72,9 @@ hist(hotels$stays_in_week_nights,xlim=c(0, 15), breaks = 50)
 barplot(table(hotels$country))
 length(table(hotels$country))
 ```
-#Hope this works
+```{r}
+breakdown <- aggregate(is_canceled ~ arrival_date_week_number, data = hotels, sum, decreasing = TRUE)
+colnames = breakdown
+barplot(breakdown$is_canceled, col=breakdown$arrival_date_week_number)
+```
+
