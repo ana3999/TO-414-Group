@@ -10,6 +10,12 @@ str(hotels)
 ```
 
 ```{r}
+hotels$children <- as.factor(hotels$children)
+nlevels(hotels$children)
+sort(summary(hotels$children), decreasing = TRUE)
+```
+
+```{r}
 hotels$country <- as.factor(hotels$country)
 nlevels(hotels$country)
 sort(summary(hotels$country), decreasing = TRUE)
@@ -34,14 +40,88 @@ sort(summary(hotels$days_in_waiting_list), decreasing = TRUE)
 ```
 
 ```{r}
-hotels$total_of_special_requests <- as.factor(hotels$total_of_special_requests)
-nlevels(hotels$total_of_special_requests)
-sort(summary(hotels$total_of_special_requests), decreasing = TRUE)
+rhotels$total_of_special_requests <- as.factor(rhotels$total_of_special_requests)
+nlevels(rhotels$total_of_special_requests)
+sort(summary(rhotels$total_of_special_requests), decreasing = TRUE)
 ```
 
 ```{r}
-cancelledbyrequest <- tapply(hotels$is_canceled, hotels$total_of_special_requests, mean, na.rm = TRUE)
+cancelledbyrequest <- tapply(rhotels$is_canceled, rhotels$total_of_special_requests, mean, na.rm = TRUE)
 cancelledbyrequest
+```
+
+## Data Cleaning
+```{r}
+hotels$arrival_date_year = as.factor(hotels$arrival_date_year)
+hotels$arrival_date_month = as.factor(hotels$arrival_date_month)
+hotels$arrival_date_week_number = as.factor(hotels$arrival_date_week_number)
+hotels$arrival_date_day_of_month = as.factor(hotels$arrival_date_day_of_month)
+hotels$is_repeated_guest = as.factor(hotels$is_repeated_guest)
+hotels$company = as.factor(hotels$company)
+
+hotels <- hotels[hotels$adults > 0 , ]
+
+summary(hotels)
+```
+
+## Data exploration
+```{r}
+barplot(sort(table(hotels$arrival_date_month)), las=2)
+```
+January is the least common month, August the most
+
+```{r}
+hotels$hotel <- as.factor(hotels$hotel)
+canceledbyhotel <- tapply(hotels$is_canceled, hotels$hotel, mean, na.rm=TRUE)
+canceledbyhotel
+```
+City hotel has a higher cancellation rate
+
+```{r}
+hotels$has_children <- hotels$children > 0 | hotels$babies > 0
+canceledbychilden <- aggregate(is_canceled ~ has_children, data = hotels, mean)
+canceledbychilden
+```
+```{r}
+hotels$has_baby <- hotels$babies > 0
+(canceledbybaby<- aggregate(is_canceled ~ has_baby, data = hotels, mean))
+
+hotels$has_child <- hotels$children > 0
+(canceledbychild <- aggregate(is_canceled ~ has_child, data = hotels, mean))
+
+hotels$ones <- 1
+
+(canceled_agg <- aggregate(is_canceled ~ hotel + has_child + has_baby, data = hotels, mean))
+(ones_agg <- aggregate(ones ~ hotel + has_child + has_baby, data = hotels, sum))
+
+(canceled_agg$total <- ones_agg$ones)
+canceled_agg
+```
+
+```{r}
+hist(hotels$stays_in_week_nights,xlim=c(0, 15), breaks = 50)
+```
+
+```{r}
+barplot(table(rhotels$country))
+length(table(rhotels$country))
+```
+
+```{r}
+breakdown <- aggregate(is_canceled ~ arrival_date_week_number, data = hotels, sum, decreasing = TRUE)
+colnames = breakdown
+barplot(breakdown$is_canceled, col=breakdown$arrival_date_week_number)
+```
+
+```{r}
+Dayofmonth_bdown <- aggregate(is_canceled ~ arrival_date_day_of_month, data = hotels, sum, decreasing = TRUE)
+barplot(Dayofmonth_bdown$is_canceled, col=Dayofmonth_bdown$arrival_date_day_of_month)
+```
+
+```{r}
+Stay_in_weekend_nights <- aggregate(is_canceled ~ stays_in_weekend_nights, data = rhotels, sum, decreasing = TRUE)
+Stay_in_weekend_nights$is_canceled
+barplot(Stay_in_weekend_nights$is_canceled/nrow(rhotels), col=Stay_in_weekend_nights$Stays_in_weekend_nights)
 ```
 
 

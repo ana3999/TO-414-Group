@@ -10,102 +10,223 @@ output:
 
 ## Introduction
 
-#### Executive Summary?
+In this project, we are utilizing the data set of hotel bookings to address the problem of cancellations. This is an important issue for hotels from a business standpoint, as cancellations result in a loss of potential revenue and limit the optimization of the hotel's service levels. Our analyses of this data set are aimed to help the management teams of both the City Hotel and Resort Hotel to better predict the likelihood of cancellation. With this, the hotels can then employ an overbooking method that can optimize the capacity-based revenue management. 
 
-#### Background
+#### Approach
 
-#### Approach 
-* Explain Client Profile method
-* Explain hotel seperation 
+In approaching this data set, we will first separate the data for the City Hotel and the Resort Hotel. For both hotels, we have narrowed down a number of booking features that we believe have a significant correlation with the probability of cancellation. From this, we have developed a profile of probabilities that can be applied to any future bookings. Hotels can then use this profile to calculate the cancellation probability of future bookings and consider the option of overbooking. 
 
 #### Data set-up
 ```{r}
 hotels <- read.csv("hotel_bookings.csv")
-summary(hotels)
+rhotels <- hotels[hotels$hotel == "Resort Hotel",]
+chotels <- hotels[hotels$hotel == "City Hotel",]
 ```
 
-## Variable  Validation
-* Include variable cut-off explanation
+## Variable  Omission
+
+  This data set provides information on many of the different features of hotel bookings. However, we have realized that not every feature is a useful variable in predicting cancellation probabilities, and thus, have been omitted:
+
+**Arrival_date_year**: Since these are the years of the recorded bookings, they are not predictive of bookings in future years
+
+**Arrival_date_week_number** & **Arrival_date_day_of_month**: These variables both have excessive variation and are also unnecessary given the analysis of the arrival months of the bookings
+
+**adults**: as shown below, this feature lacks variability in both hotel populations, so it cannot be predictive of cancellations
+```{r}
+rhotels$adults <- as.factor(rhotels$adults)
+sort(summary(rhotels$adults), decreasing = TRUE) [1:5]
+```
+```{r}
+chotels$adults <- as.factor(chotels$adults)
+sort(summary(chotels$adults), decreasing = TRUE) [1:5]
+```
+
+**meal**: as shown below, this feature lacks variability in both hotel populations, so it cannot be predictive of cancellations
+```{r}
+rhotels$meal <- as.factor(rhotels$meal)
+sort(summary(rhotels$meal), decreasing = TRUE) [1:5]
+```
+```{r}
+chotels$meal <- as.factor(chotels$meal)
+sort(summary(chotels$meal), decreasing = TRUE) [1:5]
+```
+
+**distribution_channel**: as shown below, this feature lacks variability in both hotel populations, so it cannot be predictive of cancellations
+```{r}
+rhotels$distribution_channel <- as.factor(rhotels$distribution_channel)
+sort(summary(rhotels$distribution_channel), decreasing = TRUE) [1:5]
+```
+```{r}
+chotels$distribution_channel <- as.factor(chotels$distribution_channel)
+sort(summary(chotels$distribution_channel), decreasing = TRUE) [1:5]
+```
+
+**is_repeated_guest**: as shown below, this feature lacks variability in both hotel populations, so it cannot be predictive of cancellations
+```{r}
+rhotels$is_repeated_guest <- as.factor(rhotels$is_repeated_guest)
+sort(summary(rhotels$is_repeated_guest), decreasing = TRUE) [1:5]
+```
+```{r}
+chotels$is_repeated_guest <- as.factor(chotels$is_repeated_guest)
+sort(summary(chotels$is_repeated_guest), decreasing = TRUE) [1:5]
+```
+
+**previous_cancellations**: as shown below, this feature lacks variability in both hotel populations, so it cannot be predictive of cancellations
+```{r}
+rhotels$previous_cancellations <- as.factor(rhotels$previous_cancellations)
+sort(summary(rhotels$previous_cancellations), decreasing = TRUE) [1:5]
+```
+```{r}
+chotels$previous_cancellations <- as.factor(chotels$previous_cancellations)
+sort(summary(chotels$previous_cancellations), decreasing = TRUE) [1:5]
+```
+
+**previous_bookings_not_canceled**: as shown below, this feature lacks variability in both hotel populations, so it cannot be predictive of cancellations
+```{r}
+rhotels$previous_bookings_not_canceled <- as.factor(rhotels$previous_bookings_not_canceled)
+sort(summary(rhotels$previous_bookings_not_canceled), decreasing = TRUE) [1:5]
+```
+```{r}
+chotels$previous_bookings_not_canceled <- as.factor(chotels$previous_bookings_not_canceled)
+sort(summary(chotels$previous_bookings_not_canceled), decreasing = TRUE) [1:5]
+```
+
+**reserved_room_type**: as shown below, this feature lacks variability in both hotel populations, so it cannot be predictive of cancellations
+```{r}
+rhotels$reserved_room_type <- as.factor(rhotels$reserved_room_type)
+sort(summary(rhotels$reserved_room_type), decreasing = TRUE) [1:5]
+```
+```{r}
+chotels$reserved_room_type <- as.factor(chotels$reserved_room_type)
+sort(summary(chotels$reserved_room_type), decreasing = TRUE) [1:5]
+```
+
+**assigned_room_type**: as shown below, this feature lacks variability in both hotel populations, so it cannot be predictive of cancellations
+```{r}
+rhotels$assigned_room_type <- as.factor(rhotels$assigned_room_type)
+sort(summary(rhotels$assigned_room_type), decreasing = TRUE) [1:5]
+```
+```{r}
+chotels$assigned_room_type <- as.factor(chotels$assigned_room_type)
+sort(summary(chotels$assigned_room_type), decreasing = TRUE) [1:5]
+```
+
+**booking_changes**: as shown below, this feature lacks variability in both hotel populations, so it cannot be predictive of cancellations
+```{r}
+rhotels$booking_changes <- as.factor(rhotels$booking_changes)
+sort(summary(rhotels$booking_changes), decreasing = TRUE) [1:5]
+```
+```{r}
+chotels$booking_changes <- as.factor(chotels$booking_changes)
+sort(summary(chotels$booking_changes), decreasing = TRUE) [1:5]
+```
+
+**deposit_type**: as shown below, this feature lacks variability in both hotel populations, so it cannot be predictive of cancellations
+```{r}
+rhotels$deposit_type <- as.factor(rhotels$deposit_type)
+sort(summary(rhotels$deposit_type), decreasing = TRUE) [1:5]
+```
+```{r}
+chotels$deposit_type <- as.factor(chotels$deposit_type)
+sort(summary(chotels$deposit_type), decreasing = TRUE) [1:5]
+```
+
+**company**: as shown below, this feature lacks variability in both hotel populations, so it cannot be predictive of cancellations
+```{r}
+rhotels$company <- as.factor(rhotels$company)
+sort(summary(rhotels$company), decreasing = TRUE) [1:5]
+```
+```{r}
+chotels$company <- as.factor(chotels$company)
+sort(summary(chotels$company), decreasing = TRUE) [1:5]
+```
+
+**days_in_waiting_list**: as shown below, this feature lacks variability in both hotel populations, so it cannot be predictive of cancellations
+```{r}
+rhotels$days_in_waiting_list <- as.factor(rhotels$days_in_waiting_list)
+sort(summary(rhotels$days_in_waiting_list), decreasing = TRUE) [1:5]
+```
+```{r}
+chotels$days_in_waiting_list <- as.factor(chotels$days_in_waiting_list)
+sort(summary(chotels$days_in_waiting_list), decreasing = TRUE) [1:5]
+```
+
+**customer_type**: as shown below, this feature lacks variability in both hotel populations, so it cannot be predictive of cancellations
+```{r}
+rhotels$customer_type <- as.factor(rhotels$customer_type)
+sort(summary(rhotels$customer_type), decreasing = TRUE) [1:5]
+```
+```{r}
+chotels$customer_type <- as.factor(chotels$customer_type)
+sort(summary(chotels$customer_type), decreasing = TRUE) [1:5]
+```
+
+**adr**: since this feature records, lodging transactions rates, it is irrelevant to cancellations
+
+**required_car_parking_spaces**: as shown below, this feature lacks variability in both hotel populations, so it cannot be predictive of cancellations
+```{r}
+rhotels$required_car_parking_spaces <- as.factor(rhotels$required_car_parking_spaces)
+sort(summary(rhotels$required_car_parking_spaces), decreasing = TRUE) [1:5]
+```
+```{r}
+chotels$required_car_parking_spaces <- as.factor(chotels$required_car_parking_spaces)
+sort(summary(chotels$required_car_parking_spaces), decreasing = TRUE) [1:5]
+```
+
+
+
 
 ## Resort Hotel 
 
-#### **Graphs***
-#### **Client Profiles***
+### Variable Analyses
+
+**Lead_time**
+
+**arrival_date_month**
+
+**Stays_in_weekend_nights**
+
+**Stays_in_week_nights**
+
+**children**: children=1 or not=0
+
+**babies**: babies=1 or not=0
+
+**country**
+```{r}
+rcancelledbycountry <- tapply(rhotels$is_canceled, rhotels$country, mean, na.rm = TRUE)
+sort(rcancelledbycountry, decreasing = TRUE)
+```
+
+**market_segment**
+```{r}
+rcancelledbymarket <- tapply(rhotels$is_canceled, rhotels$market_segment, mean, na.rm = TRUE)
+sort(rcancelledbymarket, decreasing = TRUE)
+```
+
+**agent**
+```{r}
+rcancelledbyagent <- tapply(rhotels$is_canceled, rhotels$agent, mean, na.rm = TRUE)
+sort(rcancelledbyagent, decreasing = TRUE)
+```
+
+**total_of_special_requests**
+```{r}
+rcancelledbyrequest <- tapply(rhotels$is_canceled, rhotels$total_of_special_requests, mean, na.rm = TRUE)
+sort(rcancelledbyrequest, decreasing = TRUE)
+```
+
+### Graphs
+
+### Booking Profile
 
 ## City Hotel 
 
-#### **Graphs***
-#### **Client Profiles***
+### Variable Analyses
 
-## Final Recommendation
+### Graphs
 
-## Data Cleaning
-```{r}
-hotels$arrival_date_year = as.factor(hotels$arrival_date_year)
-hotels$arrival_date_month = as.factor(hotels$arrival_date_month)
-hotels$arrival_date_week_number = as.factor(hotels$arrival_date_week_number)
-hotels$arrival_date_day_of_month = as.factor(hotels$arrival_date_day_of_month)
-hotels$is_repeated_guest = as.factor(hotels$is_repeated_guest)
-hotels$company = as.factor(hotels$company)
+### Booking Profile
 
-hotels <- hotels[hotels$adults > 0 , ]
-
-summary(hotels)
-```
-
-## Data exploration
-```{r}
-barplot(sort(table(hotels$arrival_date_month)), las=2)
-```
-January is the least common month, August the most
-
-```{r}
-hotels$hotel <- as.factor(hotels$hotel)
-canceledbyhotel <- tapply(hotels$is_canceled, hotels$hotel, mean, na.rm=TRUE)
-canceledbyhotel
-```
-City hotel has a higher cancellation rate
-
-```{r}
-hotels$has_children <- hotels$children > 0 | hotels$babies > 0
-canceledbychilden <- aggregate(is_canceled ~ has_children, data = hotels, mean)
-canceledbychilden
-```
-```{r}
-hotels$has_baby <- hotels$babies > 0
-(canceledbybaby<- aggregate(is_canceled ~ has_baby, data = hotels, mean))
-
-hotels$has_child <- hotels$children > 0
-(canceledbychild <- aggregate(is_canceled ~ has_child, data = hotels, mean))
-
-hotels$ones <- 1
-
-(canceled_agg <- aggregate(is_canceled ~ hotel + has_child + has_baby, data = hotels, mean))
-(ones_agg <- aggregate(ones ~ hotel + has_child + has_baby, data = hotels, sum))
-
-(canceled_agg$total <- ones_agg$ones)
-canceled_agg
-```
-```{r}
-hist(hotels$stays_in_week_nights,xlim=c(0, 15), breaks = 50)
-```
-
-```{r}
-barplot(table(hotels$country))
-length(table(hotels$country))
-```
-```{r}
-breakdown <- aggregate(is_canceled ~ arrival_date_week_number, data = hotels, sum, decreasing = TRUE)
-colnames = breakdown
-barplot(breakdown$is_canceled, col=breakdown$arrival_date_week_number)
-```
-```{r}
-Dayofmonth_bdown <- aggregate(is_canceled ~ arrival_date_day_of_month, data = hotels, sum, decreasing = TRUE)
-barplot(Dayofmonth_bdown$is_canceled, col=Dayofmonth_bdown$arrival_date_day_of_month)
-```
-```{r}
-Stay_in_weekend_nights <- aggregate(is_canceled ~ stays_in_weekend_nights, data = hotels, sum, decreasing = TRUE)
-Stay_in_weekend_nights$is_canceled
-barplot(Stay_in_weekend_nights$is_canceled/nrow(hotels), col=Stay_in_weekend_nights$Stays_in_weekend_nights)
-```
+## Conclusion
 
