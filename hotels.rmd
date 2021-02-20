@@ -1,22 +1,43 @@
 ---
-title: "hotels"
-author: "Charlie Logan"
-date: "2/10/2021"
-output: html_document
+title: "Hotels and Booking Cancellations"
+author: "Ana Imam, Jihan Khandaker, Supreet Nirman, Al Shumyatcher, Mihir Zaveri"
+date: "February 21st, 2021"
+output: 
+  html_document: 
+    toc: yes
+    toc_float: yes
 ---
 
-Charlie Logan, Al Shumyatcher, Hecong Wang, Jihan Khandaker
- 
+## Introduction
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+#### Executive Summary?
 
+#### Background
+
+#### Approach 
+* Explain Client Profile method
+* Explain hotel seperation 
+
+#### Data set-up
 ```{r}
 hotels <- read.csv("hotel_bookings.csv")
 summary(hotels)
-
 ```
+
+## Variable  Validation
+* Include variable cut-off explanation
+
+## Resort Hotel 
+
+#### **Graphs***
+#### **Client Profiles***
+
+## City Hotel 
+
+#### **Graphs***
+#### **Client Profiles***
+
+## Final Recommendation
 
 ## Data Cleaning
 ```{r}
@@ -30,8 +51,8 @@ hotels$company = as.factor(hotels$company)
 hotels <- hotels[hotels$adults > 0 , ]
 
 summary(hotels)
-                          
 ```
+
 ## Data exploration
 ```{r}
 barplot(sort(table(hotels$arrival_date_month)), las=2)
@@ -44,6 +65,7 @@ canceledbyhotel <- tapply(hotels$is_canceled, hotels$hotel, mean, na.rm=TRUE)
 canceledbyhotel
 ```
 City hotel has a higher cancellation rate
+
 ```{r}
 hotels$has_children <- hotels$children > 0 | hotels$babies > 0
 canceledbychilden <- aggregate(is_canceled ~ has_children, data = hotels, mean)
