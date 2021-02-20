@@ -77,4 +77,13 @@ breakdown <- aggregate(is_canceled ~ arrival_date_week_number, data = hotels, su
 colnames = breakdown
 barplot(breakdown$is_canceled, col=breakdown$arrival_date_week_number)
 ```
+```{r}
+Dayofmonth_bdown <- aggregate(is_canceled ~ arrival_date_day_of_month, data = hotels, sum, decreasing = TRUE)
+barplot(Dayofmonth_bdown$is_canceled, col=Dayofmonth_bdown$arrival_date_day_of_month)
+```
+```{r}
+Stay_in_weekend_nights <- aggregate(is_canceled ~ stays_in_weekend_nights, data = hotels, sum, decreasing = TRUE)
+Stay_in_weekend_nights$is_canceled
+barplot(Stay_in_weekend_nights$is_canceled/nrow(hotels), col=Stay_in_weekend_nights$Stays_in_weekend_nights)
+```
 
