@@ -1,0 +1,48 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+hotels <- read.csv("hotel_bookings.csv")
+View(hotels)
+str(hotels)
+```
+
+```{r}
+hotels$country <- as.factor(hotels$country)
+nlevels(hotels$country)
+sort(summary(hotels$country), decreasing = TRUE)
+```
+
+```{r}
+hotels$market_segment <- as.factor(hotels$market_segment)
+nlevels(hotels$market_segment)
+sort(summary(hotels$market_segment), decreasing = TRUE)
+```
+
+```{r}
+hotels$agent <- as.factor(hotels$agent)
+nlevels(hotels$agent)
+sort(summary(hotels$agent), decreasing = TRUE)
+```
+
+```{r}
+hotels$days_in_waiting_list <- as.factor(hotels$days_in_waiting_list)
+nlevels(hotels$days_in_waiting_list)
+sort(summary(hotels$days_in_waiting_list), decreasing = TRUE)
+```
+
+```{r}
+hotels$total_of_special_requests <- as.factor(hotels$total_of_special_requests)
+nlevels(hotels$total_of_special_requests)
+sort(summary(hotels$total_of_special_requests), decreasing = TRUE)
+```
+
+```{r}
+cancelledbyrequest <- tapply(hotels$is_canceled, hotels$total_of_special_requests, mean, na.rm = TRUE)
+cancelledbyrequest
+```
+
+
+
