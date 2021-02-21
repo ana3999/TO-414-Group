@@ -9,8 +9,12 @@ output:
 ---
 
 ```{r setup, include=FALSE}
+hotels <- read.csv("hotel_bookings.csv")
+rhotels <- hotels[hotels$hotel == "Resort Hotel",]
+chotels <- hotels[hotels$hotel == "City Hotel",]
 knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
+# install.packages(gridExtra)
 library(gridExtra)
 ```
 
@@ -21,13 +25,6 @@ In this project, we are utilizing the data set of hotel bookings to address the 
 #### Approach
 
 In approaching this data set, we will first separate the data for the City Hotel and the Resort Hotel. For both hotels, we have narrowed down a number of booking features that we believe have a significant correlation with the probability of cancellation. From this, we have developed a profile of probabilities that can be applied to any future bookings. Hotels can then use this profile to calculate the cancellation probability of future bookings and consider the option of overbooking. 
-
-#### Data set-up
-```{r}
-hotels <- read.csv("hotel_bookings.csv")
-rhotels <- hotels[hotels$hotel == "Resort Hotel",]
-chotels <- hotels[hotels$hotel == "City Hotel",]
-```
 
 ## Variable  Omission
 
@@ -264,8 +261,6 @@ rcancelledbyrequest <- tapply(rhotels$is_canceled, rhotels$total_of_special_requ
 sort(rcancelledbyrequest, decreasing = TRUE)
 ```
 
-### Graphs
-
 ### Booking Profile
 
 ## City Hotel 
@@ -350,13 +345,11 @@ ccancelledbyrequest <- tapply(chotels$is_canceled, chotels$total_of_special_requ
 sort(ccancelledbyrequest, decreasing = TRUE)
 ```
 
-### Graphs
-
 **cancellations by number of adults and children**
 ```{r, fig.width = 15}
 #, fig.height = 5}
 colorPlot <- function(name, h = hotels){
-  
+
   ifelse(name == "City Hotel", x <- chotels, x<- rhotels)
    #      ifelse(thing == "Airline", x <- n$carrier, x <- n$timeofday))
   
@@ -400,6 +393,7 @@ grid.arrange(plot1, plot2, ncol=2)
 
 
 ```
+
 ### Booking Profile
 
 ## Conclusion
