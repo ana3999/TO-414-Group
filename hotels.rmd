@@ -196,6 +196,7 @@ sort(summary(chotels$required_car_parking_spaces), decreasing = TRUE) [1:5]
 ```{r}
 rcancelledbycountry <- tapply(rhotels$is_canceled, rhotels$country, mean, na.rm = TRUE)
 sort(rcancelledbycountry, decreasing = TRUE)
+
 ```
 
 **market_segment**
@@ -223,6 +224,46 @@ sort(rcancelledbyrequest, decreasing = TRUE)
 ## City Hotel 
 
 ### Variable Analyses
+**Lead_time**
+
+**arrival_date_month**
+
+**Stays_in_weekend_nights**
+
+**Stays_in_week_nights**
+
+**children**: children=1 or not=0
+
+**babies**: babies=1 or not=0
+
+**country**
+```{r}
+chotels$country <- as.factor(chotels$country)
+ccancelledbycountry <- tapply(chotels$is_canceled, chotels$country, sum, na.rm = TRUE)
+summary(chotels$country)[1:15]
+sort(ccancelledbycountry, decreasing = TRUE)[1:15]
+```
+
+**market_segment**
+```{r}
+chotels$market_segment <- as.factor(chotels$market_segment)
+ccancelledbymarket <- tapply(chotels$is_canceled, chotels$market_segment, mean, na.rm = TRUE)
+summary(chotels$market_segment)
+sort(ccancelledbymarket, decreasing = TRUE)
+```
+
+**agent**
+```{r}
+rcancelledbyagent <- tapply(rhotels$is_canceled, rhotels$agent, mean, na.rm = TRUE)
+sort(rcancelledbyagent, decreasing = TRUE)
+```
+
+**total_of_special_requests**
+```{r}
+rcancelledbyrequest <- tapply(rhotels$is_canceled, rhotels$total_of_special_requests, mean, na.rm = TRUE)
+sort(rcancelledbyrequest, decreasing = TRUE)
+```
+
 
 ### Graphs
 
