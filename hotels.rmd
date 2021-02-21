@@ -197,8 +197,16 @@ sort(rcancelledbymonth, decreasing = TRUE)
 
 
 **Stays_in_weekend_nights**
+```{r}
+r_weekend_cancel <- tapply(rhotels$is_canceled, rhotels$stays_in_weekend_nights, mean, na.rm = TRUE)
+plot(r_weekend_cancel, xlab = "Weekend Days Booked")
+```
 
 **Stays_in_week_nights**
+```{r}
+r_weekday_cancel <- tapply(rhotels$is_canceled, rhotels$stays_in_week_nights, mean, na.rm = TRUE)
+plot(r_weekday_cancel, xlab = "Weekday Days Booked")
+```
 
 **children**: children=1 or not=0
 
@@ -252,8 +260,16 @@ sort(ccancelledbymonth, decreasing = TRUE)
 ```
 
 **Stays_in_weekend_nights**
+```{r}
+c_weekend_cancel <- tapply(chotels$is_canceled, chotels$stays_in_weekend_nights, mean, na.rm = TRUE)
+plot(c_weekend_cancel, xlab = "Weekend Days Booked")
+```
 
 **Stays_in_week_nights**
+```{r}
+c_weekday_cancel <- tapply(chotels$is_canceled, chotels$stays_in_week_nights, mean, na.rm = TRUE)
+plot(c_weekday_cancel, xlab = "Weekday Days Booked")
+```
 
 **children**: children=1 or not=0
 
