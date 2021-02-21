@@ -8,6 +8,12 @@ output:
     toc_float: yes
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(gridExtra)
+```
+
 ## Introduction
 
 In this project, we are utilizing the data set of hotel bookings to address the problem of cancellations. This is an important issue for hotels from a business standpoint, as cancellations result in a loss of potential revenue and limit the optimization of the hotel's service levels. Our analyses of this data set are aimed to help the management teams of both the City Hotel and Resort Hotel to better predict the likelihood of cancellation. With this, the hotels can then employ an overbooking method that can optimize the capacity-based revenue management. 
@@ -346,6 +352,54 @@ sort(ccancelledbyrequest, decreasing = TRUE)
 
 ### Graphs
 
+**cancellations by number of adults and children**
+```{r, fig.width = 15}
+#, fig.height = 5}
+colorPlot <- function(name, h = hotels){
+  
+  ifelse(name == "City Hotel", x <- chotels, x<- rhotels)
+   #      ifelse(thing == "Airline", x <- n$carrier, x <- n$timeofday))
+  
+  a <- as.data.frame( aggregate(is_canceled ~ adults + children, data = x, mean, na.rm = TRUE) )
+  
+  SEQ <- function(x){
+    return (seq(0, x, by = 1))
+  }
+  
+  qplot(a$adults,
+        a$children,
+        color = a$is_canceled,
+        size = I(10),
+        geom = "point",
+        alpha = I(1),
+        xlab = "Adults",
+        ylab = "Children") +
+    
+    scale_color_gradient(
+      limits = c(0, max(a$is_canceled)),
+      low = "green", high = "red",
+      name = "Cancellation Probability") +
+    
+    ggtitle(paste("Cancellation Probability as a Function of Number of\n Adults and Children for", name)) +
+    
+    theme( plot.title = element_text( hjust = 0.5 ) ) +
+    theme( panel.grid.minor = element_blank() ) +
+    theme_bw()
+    
+    #scale_x_continuous(labels = SEQ(6), breaks = SEQ(6)) +
+    #scale_y_continuous(labels = SEQ(8), breaks = SEQ(8))
+    
+}
+
+plot1 <- colorPlot(name = "City Hotel")
+plot2 <- colorPlot(name = "Resort Hotel")
+grid.arrange(plot1, plot2, ncol=2)
+
+#par(mfrow = c(1,2))
+
+
+
+```
 ### Booking Profile
 
 ## Conclusion
