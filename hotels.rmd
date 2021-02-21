@@ -181,8 +181,20 @@ sort(summary(chotels$required_car_parking_spaces), decreasing = TRUE) [1:5]
 ### Variable Analyses
 
 **Lead_time**
+```{r}
+r_leadtime_cancel <- tapply(rhotels$is_canceled, rhotels$lead_time, mean, na.rm = TRUE)
+plot(r_leadtime_cancel, xlab = "Lead Time in days")
+```
+
 
 **arrival_date_month**
+```{r}
+rhotels$arrival_date_month <- as.factor(rhotels$arrival_date_month)
+rcancelledbymonth <- tapply(rhotels$is_canceled, rhotels$arrival_date_month, mean, na.rm = TRUE)
+summary(rhotels$arrival_date_month)
+sort(rcancelledbymonth, decreasing = TRUE)
+```
+
 
 **Stays_in_weekend_nights**
 
@@ -225,8 +237,19 @@ sort(rcancelledbyrequest, decreasing = TRUE)
 
 ### Variable Analyses
 **Lead_time**
+```{r}
+c_leadtime_cancel <- tapply(chotels$is_canceled, chotels$lead_time, mean, na.rm = TRUE)
+plot(c_leadtime_cancel, xlab = "Lead Time in days")
+```
+
 
 **arrival_date_month**
+```{r}
+chotels$arrival_date_month <- as.factor(chotels$arrival_date_month)
+ccancelledbymonth <- tapply(chotels$is_canceled, chotels$arrival_date_month, mean, na.rm = TRUE)
+summary(chotels$arrival_date_month)
+sort(ccancelledbymonth, decreasing = TRUE)
+```
 
 **Stays_in_weekend_nights**
 
