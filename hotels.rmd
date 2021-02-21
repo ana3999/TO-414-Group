@@ -186,15 +186,13 @@ r_leadtime_cancel <- tapply(rhotels$is_canceled, rhotels$lead_time, mean, na.rm 
 plot(r_leadtime_cancel, xlab = "Lead Time in days")
 ```
 
-
 **arrival_date_month**
 ```{r}
 rhotels$arrival_date_month <- as.factor(rhotels$arrival_date_month)
+sort(summary(rhotels$arrival_date_month), decreasing = TRUE)
 rcancelledbymonth <- tapply(rhotels$is_canceled, rhotels$arrival_date_month, mean, na.rm = TRUE)
-summary(rhotels$arrival_date_month)
 sort(rcancelledbymonth, decreasing = TRUE)
 ```
-
 
 **Stays_in_weekend_nights**
 ```{r}
@@ -216,7 +214,6 @@ r_cancel_children <- tapply(rhotels$is_canceled, rhotels$children2, mean, na.rm 
 r_cancel_children
 ```
 
-
 **babies**: babies=1 or not=0
 ```{r}
 rhotels$babies2 <- ifelse(rhotels$babies > 0, 1, 0)
@@ -225,31 +222,38 @@ r_cancel_babies <- tapply(rhotels$is_canceled, rhotels$babies2, mean, na.rm = TR
 r_cancel_babies
 ```
 
-**country**
+**country** <-- how to filter top 10 or with > 100 bookings? tapply sum or mean?
 ```{r}
 rhotels$country <- as.factor(rhotels$country)
-rcancelledbycountry <- tapply(rhotels$is_canceled, rhotels$country, sum, na.rm = TRUE)
-summary(rhotels$country)[1:15]
-sort(rcancelledbycountry, decreasing = TRUE)[1:15]
-
+nlevels(rhotels$country)
+sort(summary(rhotels$country), decreasing = TRUE)
+rcancelledbycountry <- tapply(rhotels$is_canceled, rhotels$country, mean, na.rm = TRUE)
+sort(rcancelledbycountry, decreasing = TRUE)
 ```
 
 **market_segment**
 ```{r}
 rhotels$market_segment <- as.factor(rhotels$market_segment)
+nlevels(rhotels$market_segment)
+sort(summary(rhotels$market_segment), decreasing = TRUE)
 rcancelledbymarket <- tapply(rhotels$is_canceled, rhotels$market_segment, mean, na.rm = TRUE)
-summary(rhotels$market_segment)
 sort(rcancelledbymarket, decreasing = TRUE)
 ```
 
-**agent**
+**agent** <-- how to filter top 10 or with > 100 bookings?
 ```{r}
+rhotels$agent <- as.factor(rhotels$agent)
+nlevels(rhotels$agent)
+sort(summary(rhotels$agent), decreasing = TRUE) [1:10]
 rcancelledbyagent <- tapply(rhotels$is_canceled, rhotels$agent, mean, na.rm = TRUE)
-sort(rcancelledbyagent, decreasing = TRUE)
+sort(rcancelledbyagent, decreasing = TRUE) [1:10]
 ```
 
-**total_of_special_requests**
+**total_of_special_requests** <-- how to filter with > 100 bookings?
 ```{r}
+rhotels$total_of_special_requests <- as.factor(rhotels$total_of_special_requests)
+nlevels(rhotels$total_of_special_requests)
+sort(summary(rhotels$total_of_special_requests), decreasing = TRUE)
 rcancelledbyrequest <- tapply(rhotels$is_canceled, rhotels$total_of_special_requests, mean, na.rm = TRUE)
 sort(rcancelledbyrequest, decreasing = TRUE)
 ```
@@ -261,18 +265,18 @@ sort(rcancelledbyrequest, decreasing = TRUE)
 ## City Hotel 
 
 ### Variable Analyses
+
 **Lead_time**
 ```{r}
 c_leadtime_cancel <- tapply(chotels$is_canceled, chotels$lead_time, mean, na.rm = TRUE)
 plot(c_leadtime_cancel, xlab = "Lead Time in days")
 ```
 
-
 **arrival_date_month**
 ```{r}
 chotels$arrival_date_month <- as.factor(chotels$arrival_date_month)
+sort(summary(chotels$arrival_date_month), decreasing = TRUE)
 ccancelledbymonth <- tapply(chotels$is_canceled, chotels$arrival_date_month, mean, na.rm = TRUE)
-summary(chotels$arrival_date_month)
 sort(ccancelledbymonth, decreasing = TRUE)
 ```
 
@@ -304,34 +308,41 @@ c_cancel_babies <- tapply(chotels$is_canceled, chotels$babies2, mean, na.rm = TR
 c_cancel_babies
 ```
 
-**country**
+**country** <-- how to filter top 10 or with > 100 bookings? tapply sum or mean?
 ```{r}
 chotels$country <- as.factor(chotels$country)
-ccancelledbycountry <- tapply(chotels$is_canceled, chotels$country, sum, na.rm = TRUE)
-summary(chotels$country)[1:15]
-sort(ccancelledbycountry, decreasing = TRUE)[1:15]
+nlevels(chotels$country)
+sort(summary(chotels$country), decreasing = TRUE)
+ccancelledbycountry <- tapply(chotels$is_canceled, chotels$country, mean, na.rm = TRUE)
+sort(ccancelledbycountry, decreasing = TRUE)
 ```
 
-**market_segment**
+**market_segment** <-- how to filter with > 100 bookings?
 ```{r}
 chotels$market_segment <- as.factor(chotels$market_segment)
+nlevels(chotels$market_segment)
+sort(summary(chotels$market_segment), decreasing = TRUE) 
 ccancelledbymarket <- tapply(chotels$is_canceled, chotels$market_segment, mean, na.rm = TRUE)
-summary(chotels$market_segment)
-sort(ccancelledbymarket, decreasing = TRUE)
+sort(ccancelledbymarket, decreasing = TRUE) 
 ```
 
-**agent**
+**agent** <-- how to filter top 10 or with > 100 bookings?
 ```{r}
-rcancelledbyagent <- tapply(rhotels$is_canceled, rhotels$agent, mean, na.rm = TRUE)
-sort(rcancelledbyagent, decreasing = TRUE)
+chotels$agent <- as.factor(chotels$agent)
+nlevels(chotels$agent)
+sort(summary(chotels$agent), decreasing = TRUE) [1:10]
+ccancelledbyagent <- tapply(chotels$is_canceled, chotels$agent, mean, na.rm = TRUE)
+sort(ccancelledbyagent, decreasing = TRUE) [1:10]
 ```
 
-**total_of_special_requests**
+**total_of_special_requests** <-- how to filter with > 100 bookings?
 ```{r}
-rcancelledbyrequest <- tapply(rhotels$is_canceled, rhotels$total_of_special_requests, mean, na.rm = TRUE)
-sort(rcancelledbyrequest, decreasing = TRUE)
+chotels$total_of_special_requests <- as.factor(chotels$total_of_special_requests)
+nlevels(chotels$total_of_special_requests)
+sort(summary(chotels$total_of_special_requests), decreasing = TRUE)
+ccancelledbyrequest <- tapply(chotels$is_canceled, chotels$total_of_special_requests, mean, na.rm = TRUE)
+sort(ccancelledbyrequest, decreasing = TRUE)
 ```
-
 
 ### Graphs
 
