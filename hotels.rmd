@@ -227,14 +227,18 @@ r_cancel_babies
 
 **country**
 ```{r}
-rcancelledbycountry <- tapply(rhotels$is_canceled, rhotels$country, mean, na.rm = TRUE)
-sort(rcancelledbycountry, decreasing = TRUE)
+rhotels$country <- as.factor(rhotels$country)
+rcancelledbycountry <- tapply(rhotels$is_canceled, rhotels$country, sum, na.rm = TRUE)
+summary(rhotels$country)[1:15]
+sort(rcancelledbycountry, decreasing = TRUE)[1:15]
 
 ```
 
 **market_segment**
 ```{r}
+rhotels$market_segment <- as.factor(rhotels$market_segment)
 rcancelledbymarket <- tapply(rhotels$is_canceled, rhotels$market_segment, mean, na.rm = TRUE)
+summary(rhotels$market_segment)
 sort(rcancelledbymarket, decreasing = TRUE)
 ```
 
