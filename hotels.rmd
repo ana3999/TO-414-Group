@@ -209,8 +209,21 @@ plot(r_weekday_cancel, xlab = "Weekday Days Booked")
 ```
 
 **children**: children=1 or not=0
+```{r}
+rhotels$children2 <- ifelse(rhotels$children > 0, 1, 0)
+rhotels$children2 <- as.factor(rhotels$children2)
+r_cancel_children <- tapply(rhotels$is_canceled, rhotels$children2, mean, na.rm = TRUE)
+r_cancel_children
+```
+
 
 **babies**: babies=1 or not=0
+```{r}
+rhotels$babies2 <- ifelse(rhotels$babies > 0, 1, 0)
+rhotels$babies2 <- as.factor(rhotels$babies2)
+r_cancel_babies <- tapply(rhotels$is_canceled, rhotels$babies2, mean, na.rm = TRUE)
+r_cancel_babies
+```
 
 **country**
 ```{r}
@@ -272,8 +285,20 @@ plot(c_weekday_cancel, xlab = "Weekday Days Booked")
 ```
 
 **children**: children=1 or not=0
+```{r}
+chotels$children2 <- ifelse(chotels$children > 0, 1, 0)
+chotels$children2 <- as.factor(chotels$children2)
+c_cancel_children <- tapply(chotels$is_canceled, chotels$children2, mean, na.rm = TRUE)
+c_cancel_children
+```
 
 **babies**: babies=1 or not=0
+```{r}
+chotels$babies2 <- ifelse(chotels$babies > 0, 1, 0)
+chotels$babies2 <- as.factor(chotels$babies2)
+c_cancel_babies <- tapply(chotels$is_canceled, chotels$babies2, mean, na.rm = TRUE)
+c_cancel_babies
+```
 
 **country**
 ```{r}
