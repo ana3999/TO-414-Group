@@ -206,15 +206,99 @@ As shown in the table, August and June have the highest cancellation rates of ab
 ```{r}
 r_weekend_cancel <- tapply(rhotels$is_canceled, rhotels$stays_in_weekend_nights, mean, na.rm = TRUE)
 plot(r_weekend_cancel, xlab = "Weekend Days Booked")
+
+weekend_cancellations_by_hotel <- function(name = "HOTEL"){
+  ifelse(name == "City", hot <- chotels, hot <- rhotels)
+  a <- as.data.frame( table( hot$stays_in_weekend_nights, hot$is_canceled ) )
+  a <- as.data.frame( cbind.data.frame( a[1:(nrow(a)/2),1],
+                                        a[1:(nrow(a)/2),3],
+                                        a[(nrow(a)/2+1):nrow(a),3] )
+                      )
+  colnames(a) <- c("Weekends", "NotCanceled", "Canceled")
+  a$percentCanceled <- a$Canceled / (a$Canceled + a$NotCanceled)
+  a <- a[a$Canceled + a$NotCanceled >= 10, ]
+  a <- tapply( a$percentCanceled, a$Weekends, mean, na.rm = TRUE )
+  #the pretty colors serve as but a temporary repreive from the torture that is trying to write code in R
+  barplot( a[!is.na(a)] , xlab = "Weekend Nights", ylab = "Cancellation Probability", main = paste(name, "Hotel"), axis.lty=1, ylim = c(0,0.8), col = rgb(255 * a[!is.na(a)], 225 * (1-a[!is.na(a)]), 0, maxColorValue = 255))
+  
+  
+}
+
+#weekend_cancellations_by_hotel("Resort")
 ```
+
 As shown in the scatter plot, the cancellation rates gradually increases to about 0.6 until about 10 weekend days booked. After that, the cancellation rate drops to nearly 0. Given this, the hotel can assume that if there are under 10 weekend days booked, the probability of cancellation will gradually increase up to 0.6 at most. 
 
 **Stays_in_week_nights**
 ```{r}
 r_weekday_cancel <- tapply(rhotels$is_canceled, rhotels$stays_in_week_nights, mean, na.rm = TRUE)
 plot(r_weekday_cancel, xlab = "Weekday Nights Booked")
+
+weeknight_cancellations_by_hotel <- function(name = "HOTEL"){
+  ifelse(name == "City", hot <- chotels, hot <- rhotels)
+  a <- as.data.frame( table( hot$stays_in_week_nights, hot$is_canceled ) )
+  a <- as.data.frame( cbind.data.frame( a[1:(nrow(a)/2),1],
+                                        a[1:(nrow(a)/2),3],
+                                        a[(nrow(a)/2+1):nrow(a),3] )
+                      )
+  colnames(a) <- c("Weeknights", "NotCanceled", "Canceled")
+  a$percentCanceled <- a$Canceled / (a$Canceled + a$NotCanceled)
+  a <- a[a$Canceled + a$NotCanceled >= 10, ]
+  a <- tapply( a$percentCanceled, a$Weeknights, mean, na.rm = TRUE )
+  barplot( a[!is.na(a)] , xlab = "Week Nights", ylab = "Cancellation Probability", main = paste(name, "Hotel"), axis.lty=1, ylim = c(0,0.8), col = rgb(255 * a[!is.na(a)], 225 * (1-a[!is.na(a)]), 0, maxColorValue = 255))
+  
+  
+}
+
+#weeknight_cancellations_by_hotel("Resort")
 ```
 As shown in the scatter plot, the cancellation rates are generally consistent around 0.3 until about 10 weekday nights booked. After that, the cancellation rate varies greatly. Given this inconsistent variation in cancellation rates, the hotel does not need to consider the number of weekday nights booked as much when calculating the overall probability of cancellation for a booking.
+
+**week and weekend nights**
+```{r}
+week_end_colorPlot <- function(name, x = hotels, probabilityLimit = 9001, minNumber = 30){
+  
+  ifelse(name == "City Hotel", x <- chotels, x<- rhotels)
+
+  x$ones <- 1
+  
+  a <- aggregate(is_canceled ~ stays_in_week_nights + stays_in_weekend_nights, data = x, mean, na.rm = TRUE)
+  onesFrame <- aggregate(ones ~ stays_in_week_nights + stays_in_weekend_nights, data = x, sum, na.rm = TRUE)
+  
+  filteredA <- cbind(a[,1][onesFrame$ones > minNumber][a$is_canceled < probabilityLimit],
+                     a[,2][onesFrame$ones > minNumber][a$is_canceled < probabilityLimit],
+                     a[,3][onesFrame$ones > minNumber][a$is_canceled < probabilityLimit]
+                     )
+  
+  colnames(filteredA) <- c("stays_in_week_nights", "stays_in_weekend_nights", "Canceled")
+  filteredA <- as.data.frame( filteredA[complete.cases(filteredA), ] )
+  
+  qplot(filteredA$stays_in_week_nights,
+        filteredA$stays_in_weekend_nights,
+        color = filteredA$Canceled,
+        size = I(12),
+        geom = "point",
+        alpha = I(0.85),
+        xlab = "Stays in Week Nights",
+        ylab = "Stays in Weekend Nights") +
+    
+    scale_color_gradient(
+      limits = c(0, ceiling( max(filteredA$Canceled) / 0.2) * 0.2),
+      low = "green", high = "red",
+      name = "Cancellation Probability") +
+    
+    ggtitle(paste("Cancellation Probability as a Function of Number\n of Week and Weekend Nights for", name)) +
+    
+    theme( plot.title = element_text( hjust = 0.5 ) ) +
+    theme( panel.grid.minor = element_blank() ) +
+    theme_bw()
+    
+}
+
+#week_end_colorPlot(name = "Resort Hotel")#, minNumber = 5)
+#week_end_colorPlot(name = "Resort Hotel", minNumber = 70)
+
+```
 
 **children**
 ```{r}
@@ -233,6 +317,68 @@ r_cancel_babies <- tapply(rhotels$is_canceled, rhotels$babies2, mean, na.rm = TR
 r_cancel_babies
 ```
 The cancellation rate for bookings without babies is about 0.28 while the cancellation rate for bookings with babies is about 0.19. Given this fairly large difference, the hotel should consider if there are babies when calculating the probability of cancellation for a booking.
+
+**cancellations by number of adults and children**
+```{r}
+#, fig.height = 5}
+adultChild_colorPlot <- function(name, x = hotels, probabilityLimit = 9001, minNumber = 30){
+  
+  ifelse(name == "City Hotel", x <- chotels, x<- rhotels)
+   #      ifelse(thing == "Airline", x <- n$carrier, x <- n$timeofday))
+  
+  x$ones <- 1
+  
+  a <- aggregate(is_canceled ~ adults + children, data = x, mean, na.rm = TRUE)
+  onesFrame <- aggregate(ones ~ adults + children, data = x, sum, na.rm = TRUE)
+  
+  filteredA <- cbind(a[,1][onesFrame$ones > minNumber][a$is_canceled < probabilityLimit],
+                     a[,2][onesFrame$ones > minNumber][a$is_canceled < probabilityLimit],
+                     a[,3][onesFrame$ones > minNumber][a$is_canceled < probabilityLimit]
+                     )
+  
+  colnames(filteredA) <- c("Adults", "Children", "Canceled")
+  filteredA <- as.data.frame( filteredA[complete.cases(filteredA), ] )
+  
+  
+  SEQ <- function(x){
+    return (seq(0, x, by = 1))
+  }
+  
+  #[with(a, id %in% names(which(table(id)>=5))), ]
+  
+  qplot(filteredA$Adults,
+        filteredA$Children,
+        color = filteredA$Canceled,
+        size = I(12),
+        geom = "point",
+        alpha = I(1),
+        xlab = "Adults",
+        ylab = "Children") +
+    
+    scale_color_gradient(
+      limits = c(0, ceiling( max(filteredA$Canceled) / 0.2) * 0.2),
+      low = "green", high = "red",
+      name = "Cancellation Probability") +
+    
+    ggtitle(paste("Cancellation Probability as a Function of Number\n of Adults and Children for", name)) +
+    
+    theme( plot.title = element_text( hjust = 0.5 ) ) +
+    theme( panel.grid.minor = element_blank() ) +
+    theme_bw()
+    
+    #scale_x_continuous(labels = SEQ(6), breaks = SEQ(6)) +
+    #scale_y_continuous(labels = SEQ(8), breaks = SEQ(8))
+    
+}
+
+#plot1 <- colorPlot(name = "City Hotel")
+#plot2 <- colorPlot(name = "Resort Hotel")
+#grid.arrange(plot1, plot2, ncol=2)
+
+#adultChild_colorPlot(name = "Resort Hotel", minNumber = 5)
+#adultChild_colorPlot(name = "Resort Hotel", probabilityLimit = 0.9)
+```
+
 
 **country** 
 ```{r}
@@ -304,6 +450,10 @@ As shown in the table, April has the highest cancellation rate of about 0.46 whi
 ```{r}
 c_weekend_cancel <- tapply(chotels$is_canceled, chotels$stays_in_weekend_nights, mean, na.rm = TRUE)
 plot(c_weekend_cancel, xlab = "Weekend Days Booked")
+
+#par(mfrow = c(1,2))
+#weekend_cancellations_by_hotel("City")
+#weekend_cancellations_by_hotel("Resort")
 ```
 As shown in the scatter plot, the cancellation rates gradually increases to about 0.8 until about 11 weekend days booked. After that, the cancellation rate drops to nearly 0. Given this, the hotel can assume that if there are under 11 weekend days booked, the probability of cancellation will gradually increase up to 0.8 at most. 
 
@@ -311,6 +461,14 @@ As shown in the scatter plot, the cancellation rates gradually increases to abou
 ```{r}
 c_weekday_cancel <- tapply(chotels$is_canceled, chotels$stays_in_week_nights, mean, na.rm = TRUE)
 plot(c_weekday_cancel, xlab = "Weekday Nights Booked")
+
+#par(mfrow = c(1,2))
+#weeknight_cancellations_by_hotel("City")
+#weeknight_cancellations_by_hotel("Resort")
+
+# **week and weekend nights**
+# week_end_colorPlot(name = "City Hotel")#, minNumber = 5)
+# week_end_colorPlot(name = "Resort Hotel", minNumber = 0) this looks cool but isn't very useful
 ```
 As shown in the scatter plot, the cancellation rates increases until about 25 weekend nights booked. After that, the cancellation rate drops to nearly 0. Given this, the hotel can assume that if there are under 25 weekday nights booked, the probability of cancellation will gradually increase. 
 
@@ -331,6 +489,11 @@ c_cancel_babies <- tapply(chotels$is_canceled, chotels$babies2, mean, na.rm = TR
 c_cancel_babies
 ```
 The cancellation rate for bookings without babies is about 0.42 while the cancellation rate for bookings with babies is about 0.17. Given this significantly large difference, the hotel should consider if there are babies when calculating the probability of cancellation for a booking.
+
+**cancellations by number of adults and children**
+```{r}
+#adultChild_colorPlot(name = "City Hotel")
+```
 
 **country**
 ```{r}
@@ -421,7 +584,26 @@ grid.arrange(plot1, plot2, ncol=2)
 
 
 ```
+###Graphs
 
+```{r}
+#ALL THE GRAPHS!!!
+weekend_cancellations_by_hotel("Resort")
+weeknight_cancellations_by_hotel("Resort")
+week_end_colorPlot(name = "Resort Hotel")#, minNumber = 5)
+week_end_colorPlot(name = "Resort Hotel", minNumber = 70)
+adultChild_colorPlot(name = "Resort Hotel", minNumber = 5)
+adultChild_colorPlot(name = "Resort Hotel", probabilityLimit = 0.9)
+par(mfrow = c(1,2))
+weekend_cancellations_by_hotel("City")
+weekend_cancellations_by_hotel("Resort")
+par(mfrow = c(1,2))
+weeknight_cancellations_by_hotel("City")
+weeknight_cancellations_by_hotel("Resort")
+week_end_colorPlot(name = "City Hotel")#, minNumber = 5)
+adultChild_colorPlot(name = "City Hotel")
+
+```
 ### Booking Profile
 
 ## Conclusion
