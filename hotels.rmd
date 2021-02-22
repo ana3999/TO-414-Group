@@ -216,33 +216,37 @@ plot(r_weekday_cancel, xlab = "Weekday Nights Booked")
 ```
 As shown in the scatter plot, the cancellation rates are generally consistent around 0.3 until about 10 weekday nights booked. After that, the cancellation rate varies greatly. Given this inconsistent variation in cancellation rates, the hotel does not need to consider the number of weekday nights booked as much when calculating the overall probability of cancellation for a booking.
 
-**children**: children=1 or not=0
+**children**
 ```{r}
 rhotels$children2 <- ifelse(rhotels$children > 0, 1, 0)
 rhotels$children2 <- as.factor(rhotels$children2)
 r_cancel_children <- tapply(rhotels$is_canceled, rhotels$children2, mean, na.rm = TRUE)
 r_cancel_children
 ```
+The cancellation rate for bookings without children is about 0.27 while the cancellation rate for bookings with children is about 0.38. Given this fairly large difference, the hotel should consider if there are children when calculating the probability of cancellation for a booking.
 
-**babies**: babies=1 or not=0
+**babies**
 ```{r}
 rhotels$babies2 <- ifelse(rhotels$babies > 0, 1, 0)
 rhotels$babies2 <- as.factor(rhotels$babies2)
 r_cancel_babies <- tapply(rhotels$is_canceled, rhotels$babies2, mean, na.rm = TRUE)
 r_cancel_babies
 ```
+The cancellation rate for bookings without babies is about 0.28 while the cancellation rate for bookings with babies is about 0.19. Given this fairly large difference, the hotel should consider if there are babies when calculating the probability of cancellation for a booking.
 
-**country** <-- how to filter top 10 or with > 100 bookings? tapply sum or mean?
+**country** 
 ```{r}
 rhotels$country <- as.factor(rhotels$country)
-nlevels(rhotels$country)
 sort(summary(rhotels$country), decreasing = TRUE)
 ```
-
+*Variable Validation: though this variable has enough variation, not every country has a significant sample size. Therefore, when analyzing the cancellation rates, we will omit countries with less than 1000 bookings.
 ```{r}
+sort(summary(rhotels$country), decreasing = TRUE) [1:6]
 rcancelledbycountry <- tapply(rhotels$is_canceled, rhotels$country, mean, na.rm = TRUE)
 sort(rcancelledbycountry, decreasing = TRUE)
 ```
+PRT, GBR, ESP, IRL, FRA, and DEU have cancellation rates of about 0.42, 0.13, 0.22, 0.20, 0.13, and 0.12, respectively. 
+This variation shows that the cancellation rates are independent from the total number of bookings, so the country of the booking should be considered when calculating the probability of cancellation (if there has been at least 1000 bookings before).
 
 **market_segment**
 ```{r}
@@ -310,30 +314,37 @@ plot(c_weekday_cancel, xlab = "Weekday Nights Booked")
 ```
 As shown in the scatter plot, the cancellation rates increases until about 25 weekend nights booked. After that, the cancellation rate drops to nearly 0. Given this, the hotel can assume that if there are under 25 weekday nights booked, the probability of cancellation will gradually increase. 
 
-**children**: children=1 or not=0
+**children**
 ```{r}
 chotels$children2 <- ifelse(chotels$children > 0, 1, 0)
 chotels$children2 <- as.factor(chotels$children2)
 c_cancel_children <- tapply(chotels$is_canceled, chotels$children2, mean, na.rm = TRUE)
 c_cancel_children
 ```
+The cancellation rate for bookings without children is about 0.42 while the cancellation rate for bookings with children is about 0.35. Given this fairly large difference, the hotel should consider if there are children when calculating the probability of cancellation for a booking.
 
-**babies**: babies=1 or not=0
+**babies**
 ```{r}
 chotels$babies2 <- ifelse(chotels$babies > 0, 1, 0)
 chotels$babies2 <- as.factor(chotels$babies2)
 c_cancel_babies <- tapply(chotels$is_canceled, chotels$babies2, mean, na.rm = TRUE)
 c_cancel_babies
 ```
+The cancellation rate for bookings without babies is about 0.42 while the cancellation rate for bookings with babies is about 0.17. Given this significantly large difference, the hotel should consider if there are babies when calculating the probability of cancellation for a booking.
 
-**country** <-- how to filter top 10 or with > 100 bookings? tapply sum or mean?
+**country**
 ```{r}
 chotels$country <- as.factor(chotels$country)
-nlevels(chotels$country)
 sort(summary(chotels$country), decreasing = TRUE)
+```
+*Variable Validation: though this variable has enough variation, not every country has a significant sample size. Therefore, when analyzing the cancellation rates, we will omit countries with less than 1000 bookings.
+```{r}
+sort(summary(chotels$country), decreasing = TRUE) [1:13]
 ccancelledbycountry <- tapply(chotels$is_canceled, chotels$country, mean, na.rm = TRUE)
 sort(ccancelledbycountry, decreasing = TRUE)
 ```
+The countries with the highest number of bookings are PRT, FRA, DEU, GBR, and ESP, and their cancellation rates are about 0.65, 0.20, 0.18, 0.29, and 0.29, respectively.
+This variation shows that the cancellation rates are independent from the total number of bookings, so the country of the booking should be considered when calculating the probability of cancellation (if there has been at least 1000 bookings before).
 
 **market_segment** <-- how to filter with > 100 bookings?
 ```{r}
