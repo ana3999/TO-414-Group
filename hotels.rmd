@@ -25,6 +25,83 @@ library(ggplot2)
 # install.packages(gridExtra)
 library(gridExtra)
 ```
+### Graph Set-up and Design
+```{r}
+weekend_cancellations_by_hotel <- function(name = "HOTEL"){
+  ifelse(name == "City", hot <- chotels, hot <- rhotels)
+  a <- as.data.frame( table( hot$stays_in_weekend_nights, hot$is_canceled ) )
+  a <- as.data.frame( cbind.data.frame( a[1:(nrow(a)/2),1],
+                                        a[1:(nrow(a)/2),3],
+                                        a[(nrow(a)/2+1):nrow(a),3] )
+                      )
+  colnames(a) <- c("Weekends", "NotCanceled", "Canceled")
+  a$percentCanceled <- a$Canceled / (a$Canceled + a$NotCanceled)
+  a <- a[a$Canceled + a$NotCanceled >= 10, ]
+  a <- tapply( a$percentCanceled, a$Weekends, mean, na.rm = TRUE )
+  #the pretty colors serve as but a temporary repreive from the torture that is trying to write code in R
+  barplot( a[!is.na(a)] , xlab = "Weekend Nights", ylab = "Cancellation Probability", main = paste(name, "Hotel"), axis.lty=1, ylim = c(0,0.8), col = rgb(255 * a[!is.na(a)], 225 * (1-a[!is.na(a)]), 0, maxColorValue = 255))
+  
+  
+}
+```
+```{r}
+weeknight_cancellations_by_hotel <- function(name = "HOTEL"){
+  ifelse(name == "City", hot <- chotels, hot <- rhotels)
+  a <- as.data.frame( table( hot$stays_in_week_nights, hot$is_canceled ) )
+  a <- as.data.frame( cbind.data.frame( a[1:(nrow(a)/2),1],
+                                        a[1:(nrow(a)/2),3],
+                                        a[(nrow(a)/2+1):nrow(a),3] )
+                      )
+  colnames(a) <- c("Weeknights", "NotCanceled", "Canceled")
+  a$percentCanceled <- a$Canceled / (a$Canceled + a$NotCanceled)
+  a <- a[a$Canceled + a$NotCanceled >= 10, ]
+  a <- tapply( a$percentCanceled, a$Weeknights, mean, na.rm = TRUE )
+  barplot( a[!is.na(a)] , xlab = "Week Nights", ylab = "Cancellation Probability", main = paste(name, "Hotel"), axis.lty=1, ylim = c(0,0.8), col = rgb(255 * a[!is.na(a)], 225 * (1-a[!is.na(a)]), 0, maxColorValue = 255))
+  
+  
+}
+```
+```{r}
+week_end_colorPlot <- function(name, x = hotels, probabilityLimit = 9001, minNumber = 30){
+  
+  ifelse(name == "City Hotel", x <- chotels, x<- rhotels)
+
+  x$ones <- 1
+  
+  a <- aggregate(is_canceled ~ stays_in_week_nights + stays_in_weekend_nights, data = x, mean, na.rm = TRUE)
+  onesFrame <- aggregate(ones ~ stays_in_week_nights + stays_in_weekend_nights, data = x, sum, na.rm = TRUE)
+  
+  filteredA <- cbind(a[,1][onesFrame$ones > minNumber][a$is_canceled < probabilityLimit],
+                     a[,2][onesFrame$ones > minNumber][a$is_canceled < probabilityLimit],
+                     a[,3][onesFrame$ones > minNumber][a$is_canceled < probabilityLimit]
+                     )
+  
+  colnames(filteredA) <- c("stays_in_week_nights", "stays_in_weekend_nights", "Canceled")
+  filteredA <- as.data.frame( filteredA[complete.cases(filteredA), ] )
+  
+  qplot(filteredA$stays_in_week_nights,
+        filteredA$stays_in_weekend_nights,
+        color = filteredA$Canceled,
+        size = I(12),
+        geom = "point",
+        alpha = I(0.85),
+        xlab = "Stays in Week Nights",
+        ylab = "Stays in Weekend Nights") +
+    
+    scale_color_gradient(
+      limits = c(0, ceiling( max(filteredA$Canceled) / 0.2) * 0.2),
+      low = "green", high = "red",
+      name = "Cancellation Probability") +
+    
+    ggtitle(paste("Cancellation Probability as a Function of Number\n of Week and Weekend Nights for", name)) +
+    
+    theme( plot.title = element_text( hjust = 0.5 ) ) +
+    theme( panel.grid.minor = element_blank() ) +
+    theme_bw()
+    
+}
+```
+
 
 ## Variable  Omission
 
@@ -176,435 +253,288 @@ chotels$required_car_parking_spaces <- as.factor(chotels$required_car_parking_sp
 sort(summary(chotels$required_car_parking_spaces), decreasing = TRUE) [1:5]
 ```
 
-
-
-
 ## Resort Hotel 
 
-### Variable Analyses
-
-**Lead_time**
+### **Lead_time**
 ```{r}
 r_leadtime_cancel <- tapply(rhotels$is_canceled, rhotels$lead_time, mean, na.rm = TRUE)
 plot(r_leadtime_cancel, xlab = "Lead Time in days")
 ```
+
 As shown in this scatter plot, there is a slight increase in the cancellation probability as the lead time increases. However, this trend also comes along with increasing variation in the cancellation probabilities, as shown by the spread of points. The least amount of variation is under 100 days of lead time. So, we can assume that, in general, a greater lead time has a greater probability of cancellation, but especially if it is under 100 days.
 
-**arrival_date_month**
+### **arrival_date_month**
 ```{r}
 rhotels$arrival_date_month <- as.factor(rhotels$arrival_date_month)
 sort(summary(rhotels$arrival_date_month), decreasing = TRUE)
 ```
+
 *Variable Validation: since this variable has enough variation and each month has a significant sample size, we can proceed to analyzing the cancellation rates without omitting any observations
 ```{r}
 rcancelledbymonth <- tapply(rhotels$is_canceled, rhotels$arrival_date_month, mean, na.rm = TRUE)
 sort(rcancelledbymonth, decreasing = TRUE)
 ```
+
 As shown in the table, August and June have the highest cancellation rates of about 0.33, which is about double the cancellation rates of November and January. Given this variation in cancellation rates, the hotel should definitely consider the month when calculating the probability of cancellation for each booking.
 
-**Stays_in_weekend_nights**
+### **Stays_in_weekend_nights**
 ```{r}
 r_weekend_cancel <- tapply(rhotels$is_canceled, rhotels$stays_in_weekend_nights, mean, na.rm = TRUE)
-plot(r_weekend_cancel, xlab = "Weekend Days Booked")
-
-weekend_cancellations_by_hotel <- function(name = "HOTEL"){
-  ifelse(name == "City", hot <- chotels, hot <- rhotels)
-  a <- as.data.frame( table( hot$stays_in_weekend_nights, hot$is_canceled ) )
-  a <- as.data.frame( cbind.data.frame( a[1:(nrow(a)/2),1],
-                                        a[1:(nrow(a)/2),3],
-                                        a[(nrow(a)/2+1):nrow(a),3] )
-                      )
-  colnames(a) <- c("Weekends", "NotCanceled", "Canceled")
-  a$percentCanceled <- a$Canceled / (a$Canceled + a$NotCanceled)
-  a <- a[a$Canceled + a$NotCanceled >= 10, ]
-  a <- tapply( a$percentCanceled, a$Weekends, mean, na.rm = TRUE )
-  #the pretty colors serve as but a temporary repreive from the torture that is trying to write code in R
-  barplot( a[!is.na(a)] , xlab = "Weekend Nights", ylab = "Cancellation Probability", main = paste(name, "Hotel"), axis.lty=1, ylim = c(0,0.8), col = rgb(255 * a[!is.na(a)], 225 * (1-a[!is.na(a)]), 0, maxColorValue = 255))
-  
-  
-}
-
-#weekend_cancellations_by_hotel("Resort")
+plot(r_weekend_cancel, xlab = "Weekend Nights Booked")
 ```
 
-As shown in the scatter plot, the cancellation rates gradually increases to about 0.6 until about 10 weekend days booked. After that, the cancellation rate drops to nearly 0. Given this, the hotel can assume that if there are under 10 weekend days booked, the probability of cancellation will gradually increase up to 0.6 at most. 
+As shown in the scatter plot, the cancellation rates gradually increases to about 0.6 until about 10 weekend nights booked. After that, the cancellation rate drops to nearly 0. Given this, the hotel can assume that if there are under 10 weekend nights booked, the probability of cancellation will gradually increase up to 0.6 at most. 
 
-**Stays_in_week_nights**
+The average cancel rates for each number of weekend nights booked is shown in the bar graph below:
+```{r}
+weekend_cancellations_by_hotel("Resort")
+```
+
+### **Stays_in_week_nights**
 ```{r}
 r_weekday_cancel <- tapply(rhotels$is_canceled, rhotels$stays_in_week_nights, mean, na.rm = TRUE)
-plot(r_weekday_cancel, xlab = "Weekday Nights Booked")
-
-weeknight_cancellations_by_hotel <- function(name = "HOTEL"){
-  ifelse(name == "City", hot <- chotels, hot <- rhotels)
-  a <- as.data.frame( table( hot$stays_in_week_nights, hot$is_canceled ) )
-  a <- as.data.frame( cbind.data.frame( a[1:(nrow(a)/2),1],
-                                        a[1:(nrow(a)/2),3],
-                                        a[(nrow(a)/2+1):nrow(a),3] )
-                      )
-  colnames(a) <- c("Weeknights", "NotCanceled", "Canceled")
-  a$percentCanceled <- a$Canceled / (a$Canceled + a$NotCanceled)
-  a <- a[a$Canceled + a$NotCanceled >= 10, ]
-  a <- tapply( a$percentCanceled, a$Weeknights, mean, na.rm = TRUE )
-  barplot( a[!is.na(a)] , xlab = "Week Nights", ylab = "Cancellation Probability", main = paste(name, "Hotel"), axis.lty=1, ylim = c(0,0.8), col = rgb(255 * a[!is.na(a)], 225 * (1-a[!is.na(a)]), 0, maxColorValue = 255))
-  
-  
-}
-
-#weeknight_cancellations_by_hotel("Resort")
+plot(r_weekday_cancel, xlab = "Week Nights Booked")
 ```
-As shown in the scatter plot, the cancellation rates are generally consistent around 0.3 until about 10 weekday nights booked. After that, the cancellation rate varies greatly. Given this inconsistent variation in cancellation rates, the hotel does not need to consider the number of weekday nights booked as much when calculating the overall probability of cancellation for a booking.
 
-**week and weekend nights**
+As shown in the scatter plot, the cancellation rates are generally consistent around 0.3 until about 10 week nights booked. After that, the cancellation rate varies greatly. Given this inconsistent variation in cancellation rates, the hotel does not need to consider the number of week nights booked as much when calculating the overall probability of cancellation for a booking.
+
+The average cancel rates for each number of week nights booked is shown in the bar graph below:
 ```{r}
-week_end_colorPlot <- function(name, x = hotels, probabilityLimit = 9001, minNumber = 30){
-  
-  ifelse(name == "City Hotel", x <- chotels, x<- rhotels)
-
-  x$ones <- 1
-  
-  a <- aggregate(is_canceled ~ stays_in_week_nights + stays_in_weekend_nights, data = x, mean, na.rm = TRUE)
-  onesFrame <- aggregate(ones ~ stays_in_week_nights + stays_in_weekend_nights, data = x, sum, na.rm = TRUE)
-  
-  filteredA <- cbind(a[,1][onesFrame$ones > minNumber][a$is_canceled < probabilityLimit],
-                     a[,2][onesFrame$ones > minNumber][a$is_canceled < probabilityLimit],
-                     a[,3][onesFrame$ones > minNumber][a$is_canceled < probabilityLimit]
-                     )
-  
-  colnames(filteredA) <- c("stays_in_week_nights", "stays_in_weekend_nights", "Canceled")
-  filteredA <- as.data.frame( filteredA[complete.cases(filteredA), ] )
-  
-  qplot(filteredA$stays_in_week_nights,
-        filteredA$stays_in_weekend_nights,
-        color = filteredA$Canceled,
-        size = I(12),
-        geom = "point",
-        alpha = I(0.85),
-        xlab = "Stays in Week Nights",
-        ylab = "Stays in Weekend Nights") +
-    
-    scale_color_gradient(
-      limits = c(0, ceiling( max(filteredA$Canceled) / 0.2) * 0.2),
-      low = "green", high = "red",
-      name = "Cancellation Probability") +
-    
-    ggtitle(paste("Cancellation Probability as a Function of Number\n of Week and Weekend Nights for", name)) +
-    
-    theme( plot.title = element_text( hjust = 0.5 ) ) +
-    theme( panel.grid.minor = element_blank() ) +
-    theme_bw()
-    
-}
-
-#week_end_colorPlot(name = "Resort Hotel")#, minNumber = 5)
-#week_end_colorPlot(name = "Resort Hotel", minNumber = 70)
-
+weeknight_cancellations_by_hotel("Resort")
 ```
 
-**children**
+### **Stays in weekend and week nights**
+Since many bookings include a combination of weekend and week nights, we have graphed the probability of cancellation by combining both variables:
+```{r}
+week_end_colorPlot(name = "Resort Hotel")#, minNumber = 5)
+```
+
+As shown here, longer stays have higher probabilities of cancellation.
+
+### **children**
 ```{r}
 rhotels$children2 <- ifelse(rhotels$children > 0, 1, 0)
 rhotels$children2 <- as.factor(rhotels$children2)
 r_cancel_children <- tapply(rhotels$is_canceled, rhotels$children2, mean, na.rm = TRUE)
 r_cancel_children
 ```
+
 The cancellation rate for bookings without children is about 0.27 while the cancellation rate for bookings with children is about 0.38. Given this fairly large difference, the hotel should consider if there are children when calculating the probability of cancellation for a booking.
 
-**babies**
+### **babies**
 ```{r}
 rhotels$babies2 <- ifelse(rhotels$babies > 0, 1, 0)
 rhotels$babies2 <- as.factor(rhotels$babies2)
 r_cancel_babies <- tapply(rhotels$is_canceled, rhotels$babies2, mean, na.rm = TRUE)
 r_cancel_babies
 ```
+
 The cancellation rate for bookings without babies is about 0.28 while the cancellation rate for bookings with babies is about 0.19. Given this fairly large difference, the hotel should consider if there are babies when calculating the probability of cancellation for a booking.
 
-**cancellations by number of adults and children**
-```{r}
-#, fig.height = 5}
-adultChild_colorPlot <- function(name, x = hotels, probabilityLimit = 9001, minNumber = 30){
-  
-  ifelse(name == "City Hotel", x <- chotels, x<- rhotels)
-   #      ifelse(thing == "Airline", x <- n$carrier, x <- n$timeofday))
-  
-  x$ones <- 1
-  
-  a <- aggregate(is_canceled ~ adults + children, data = x, mean, na.rm = TRUE)
-  onesFrame <- aggregate(ones ~ adults + children, data = x, sum, na.rm = TRUE)
-  
-  filteredA <- cbind(a[,1][onesFrame$ones > minNumber][a$is_canceled < probabilityLimit],
-                     a[,2][onesFrame$ones > minNumber][a$is_canceled < probabilityLimit],
-                     a[,3][onesFrame$ones > minNumber][a$is_canceled < probabilityLimit]
-                     )
-  
-  colnames(filteredA) <- c("Adults", "Children", "Canceled")
-  filteredA <- as.data.frame( filteredA[complete.cases(filteredA), ] )
-  
-  
-  SEQ <- function(x){
-    return (seq(0, x, by = 1))
-  }
-  
-  #[with(a, id %in% names(which(table(id)>=5))), ]
-  
-  qplot(filteredA$Adults,
-        filteredA$Children,
-        color = filteredA$Canceled,
-        size = I(12),
-        geom = "point",
-        alpha = I(1),
-        xlab = "Adults",
-        ylab = "Children") +
-    
-    scale_color_gradient(
-      limits = c(0, ceiling( max(filteredA$Canceled) / 0.2) * 0.2),
-      low = "green", high = "red",
-      name = "Cancellation Probability") +
-    
-    ggtitle(paste("Cancellation Probability as a Function of Number\n of Adults and Children for", name)) +
-    
-    theme( plot.title = element_text( hjust = 0.5 ) ) +
-    theme( panel.grid.minor = element_blank() ) +
-    theme_bw()
-    
-    #scale_x_continuous(labels = SEQ(6), breaks = SEQ(6)) +
-    #scale_y_continuous(labels = SEQ(8), breaks = SEQ(8))
-    
-}
-
-#plot1 <- colorPlot(name = "City Hotel")
-#plot2 <- colorPlot(name = "Resort Hotel")
-#grid.arrange(plot1, plot2, ncol=2)
-
-#adultChild_colorPlot(name = "Resort Hotel", minNumber = 5)
-#adultChild_colorPlot(name = "Resort Hotel", probabilityLimit = 0.9)
-```
-
-
-**country** 
+### **country** 
 ```{r}
 rhotels$country <- as.factor(rhotels$country)
 sort(summary(rhotels$country), decreasing = TRUE)
 ```
+
 *Variable Validation: though this variable has enough variation, not every country has a significant sample size. Therefore, when analyzing the cancellation rates, we will omit countries with less than 1000 bookings.
 ```{r}
 sort(summary(rhotels$country), decreasing = TRUE) [1:6]
 rcancelledbycountry <- tapply(rhotels$is_canceled, rhotels$country, mean, na.rm = TRUE)
 sort(rcancelledbycountry, decreasing = TRUE)
 ```
+
 PRT, GBR, ESP, IRL, FRA, and DEU have cancellation rates of about 0.42, 0.13, 0.22, 0.20, 0.13, and 0.12, respectively. 
+
 This variation shows that the cancellation rates are independent from the total number of bookings, so the country of the booking should be considered when calculating the probability of cancellation (if there has been at least 1000 bookings before).
 
-**market_segment**
+### **market_segment**
 ```{r}
 rhotels$market_segment <- as.factor(rhotels$market_segment)
-nlevels(rhotels$market_segment)
 sort(summary(rhotels$market_segment), decreasing = TRUE)
+```
+
+*Variable Validation: though this variable has enough variation, not every market segment has a significant sample size. Therefore, when analyzing the cancellation rates, we will omit market segments with less than 1000 bookings.
+```{r}
+sort(summary(rhotels$market_segment), decreasing = TRUE) [1:5]
 rcancelledbymarket <- tapply(rhotels$is_canceled, rhotels$market_segment, mean, na.rm = TRUE)
 sort(rcancelledbymarket, decreasing = TRUE)
 ```
 
-**agent** <-- how to filter top 10 or with > 100 bookings?
+As shown in the tables above, the Groups and Online TA market segments have significantly higher cancellation rates in comparison to other market segments. Given this variation, the hotel should consider the market segment when calculating the probability of cancellation for a booking.
+
+### **agent** 
 ```{r}
 rhotels$agent <- as.factor(rhotels$agent)
-nlevels(rhotels$agent)
-sort(summary(rhotels$agent), decreasing = TRUE) [1:10]
-rcancelledbyagent <- tapply(rhotels$is_canceled, rhotels$agent, mean, na.rm = TRUE)
-sort(rcancelledbyagent, decreasing = TRUE) [1:10]
+sort(summary(rhotels$agent), decreasing = TRUE)
 ```
 
-**total_of_special_requests** <-- how to filter with > 100 bookings?
+*Variable Validation: though this variable has enough variation, not every agent has a significant sample size. Therefore, when analyzing the cancellation rates, we will omit agents with less than 1000 bookings.
+```{r}
+sort(summary(rhotels$agent), decreasing = TRUE) [1:5]
+rcancelledbyagent <- tapply(rhotels$is_canceled, rhotels$agent, mean, na.rm = TRUE)
+sort(rcancelledbyagent, decreasing = TRUE)
+```
+
+Agents 240, 250, 241, and 40 have cancellation rates of about 0.39, 0.18, 0.14, and 0.08, respectively. 
+
+This variation shows that the cancellation rates are independent from the total number of bookings, so the agent of the booking should be considered when calculating the probability of cancellation (if there has been at least 1000 bookings before).
+
+### **total_of_special_requests**
 ```{r}
 rhotels$total_of_special_requests <- as.factor(rhotels$total_of_special_requests)
-nlevels(rhotels$total_of_special_requests)
 sort(summary(rhotels$total_of_special_requests), decreasing = TRUE)
+```
+
+*Variable Validation: though this variable has enough variation, not every number has a significant sample size. Therefore, when analyzing the cancellation rates, we will omit numbers with less than 1000 bookings.
+```{r}
+sort(summary(rhotels$total_of_special_requests), decreasing = TRUE) [1:3]
 rcancelledbyrequest <- tapply(rhotels$is_canceled, rhotels$total_of_special_requests, mean, na.rm = TRUE)
 sort(rcancelledbyrequest, decreasing = TRUE)
 ```
 
-### Booking Profile
+As shown in the table above, as the number of special requests increase, the cancellation rate slightly decreases. However, since there is not much variation between the cancellation rates overall, this does not need to be considered when calculating the probability of cancellation for a booking.
 
 ## City Hotel 
 
-### Variable Analyses
-
-**Lead_time**
+### **Lead_time**
 ```{r}
 c_leadtime_cancel <- tapply(chotels$is_canceled, chotels$lead_time, mean, na.rm = TRUE)
 plot(c_leadtime_cancel, xlab = "Lead Time in days")
 ```
+
 As shown in this scatter plot, there is a significant increase in the cancellation probability as the lead time increases. Though there is some variation, the overall trend is quite strong. Overall, we can assume that a greater lead time has a greater probability of cancellation. 
 
-**arrival_date_month**
+### **arrival_date_month**
 ```{r}
 chotels$arrival_date_month <- as.factor(chotels$arrival_date_month)
 sort(summary(chotels$arrival_date_month), decreasing = TRUE)
 ```
+
 *Variable Validation: since this variable has enough variation and each month has a significant sample size, we can proceed to analyzing the cancellation rates without omitting any observations
 ```{r}
 ccancelledbymonth <- tapply(chotels$is_canceled, chotels$arrival_date_month, mean, na.rm = TRUE)
 sort(ccancelledbymonth, decreasing = TRUE)
 ```
+
 As shown in the table, April has the highest cancellation rate of about 0.46 while March has the lowest cancellation rate of about 0.37, which is only a 0.10 difference. Given that the cancellation rates do not vary greatly between any of the months, the hotel does not need to consider the month of a booking as much when calculating its overall probability of cancellation.
 
-**Stays_in_weekend_nights**
+### **Stays_in_weekend_nights**
 ```{r}
 c_weekend_cancel <- tapply(chotels$is_canceled, chotels$stays_in_weekend_nights, mean, na.rm = TRUE)
-plot(c_weekend_cancel, xlab = "Weekend Days Booked")
-
-#par(mfrow = c(1,2))
-#weekend_cancellations_by_hotel("City")
-#weekend_cancellations_by_hotel("Resort")
+plot(c_weekend_cancel, xlab = "Weekend Nights Booked")
 ```
-As shown in the scatter plot, the cancellation rates gradually increases to about 0.8 until about 11 weekend days booked. After that, the cancellation rate drops to nearly 0. Given this, the hotel can assume that if there are under 11 weekend days booked, the probability of cancellation will gradually increase up to 0.8 at most. 
 
-**Stays_in_week_nights**
+As shown in the scatter plot, the cancellation rates gradually increases to about 0.8 until about 11 weekend nights booked. After that, the cancellation rate drops to nearly 0. Given this, the hotel can assume that if there are under 11 weekend nights booked, the probability of cancellation will gradually increase up to 0.8 at most. 
+
+The average cancel rates for each number of weekend nights booked is shown in the bar graph below:
+```{r}
+weekend_cancellations_by_hotel("City")
+```
+
+### **Stays_in_week_nights**
 ```{r}
 c_weekday_cancel <- tapply(chotels$is_canceled, chotels$stays_in_week_nights, mean, na.rm = TRUE)
-plot(c_weekday_cancel, xlab = "Weekday Nights Booked")
-
-#par(mfrow = c(1,2))
-#weeknight_cancellations_by_hotel("City")
-#weeknight_cancellations_by_hotel("Resort")
-
-# **week and weekend nights**
-# week_end_colorPlot(name = "City Hotel")#, minNumber = 5)
-# week_end_colorPlot(name = "Resort Hotel", minNumber = 0) this looks cool but isn't very useful
+plot(c_weekday_cancel, xlab = "Week Nights Booked")
 ```
-As shown in the scatter plot, the cancellation rates increases until about 25 weekend nights booked. After that, the cancellation rate drops to nearly 0. Given this, the hotel can assume that if there are under 25 weekday nights booked, the probability of cancellation will gradually increase. 
 
-**children**
+As shown in the scatter plot, the cancellation rates increases until about 25 week nights booked. After that, the cancellation rate drops to nearly 0. Given this, the hotel can assume that if there are under 25 week nights booked, the probability of cancellation will gradually increase. 
+
+The average cancel rates for each number of week nights booked is shown in the bar graph below:
+```{r}
+weeknight_cancellations_by_hotel("City")
+```
+
+### **Stays in weekend and week nights**
+Since many bookings include a combination of weekend and week nights, we have graphed the probability of cancellation by combining both variables:
+```{r}
+week_end_colorPlot(name = "City Hotel")#, minNumber = 5)
+```
+
+As shown here, longer stays have higher probabilities of cancellation.
+
+### **children**
 ```{r}
 chotels$children2 <- ifelse(chotels$children > 0, 1, 0)
 chotels$children2 <- as.factor(chotels$children2)
 c_cancel_children <- tapply(chotels$is_canceled, chotels$children2, mean, na.rm = TRUE)
 c_cancel_children
 ```
+
 The cancellation rate for bookings without children is about 0.42 while the cancellation rate for bookings with children is about 0.35. Given this fairly large difference, the hotel should consider if there are children when calculating the probability of cancellation for a booking.
 
-**babies**
+### **babies**
 ```{r}
 chotels$babies2 <- ifelse(chotels$babies > 0, 1, 0)
 chotels$babies2 <- as.factor(chotels$babies2)
 c_cancel_babies <- tapply(chotels$is_canceled, chotels$babies2, mean, na.rm = TRUE)
 c_cancel_babies
 ```
+
 The cancellation rate for bookings without babies is about 0.42 while the cancellation rate for bookings with babies is about 0.17. Given this significantly large difference, the hotel should consider if there are babies when calculating the probability of cancellation for a booking.
 
-**cancellations by number of adults and children**
-```{r}
-#adultChild_colorPlot(name = "City Hotel")
-```
-
-**country**
+### **country**
 ```{r}
 chotels$country <- as.factor(chotels$country)
 sort(summary(chotels$country), decreasing = TRUE)
 ```
+
 *Variable Validation: though this variable has enough variation, not every country has a significant sample size. Therefore, when analyzing the cancellation rates, we will omit countries with less than 1000 bookings.
 ```{r}
 sort(summary(chotels$country), decreasing = TRUE) [1:13]
 ccancelledbycountry <- tapply(chotels$is_canceled, chotels$country, mean, na.rm = TRUE)
 sort(ccancelledbycountry, decreasing = TRUE)
 ```
+
 The countries with the highest number of bookings are PRT, FRA, DEU, GBR, and ESP, and their cancellation rates are about 0.65, 0.20, 0.18, 0.29, and 0.29, respectively.
+
 This variation shows that the cancellation rates are independent from the total number of bookings, so the country of the booking should be considered when calculating the probability of cancellation (if there has been at least 1000 bookings before).
 
-**market_segment** <-- how to filter with > 100 bookings?
+### **market_segment**
 ```{r}
 chotels$market_segment <- as.factor(chotels$market_segment)
-nlevels(chotels$market_segment)
 sort(summary(chotels$market_segment), decreasing = TRUE) 
+```
+
+*Variable Validation: though this variable has enough variation, not every market segment has a significant sample size. Therefore, when analyzing the cancellation rates, we will omit market segments with less than 1000 bookings.
+```{r}
+sort(summary(chotels$market_segment), decreasing = TRUE) [1:5]
 ccancelledbymarket <- tapply(chotels$is_canceled, chotels$market_segment, mean, na.rm = TRUE)
 sort(ccancelledbymarket, decreasing = TRUE) 
 ```
 
-**agent** <-- how to filter top 10 or with > 100 bookings?
+As shown in the tables above, the Groups, Offline TA/TO, and Online TA market segments have significantly higher cancellation rates in comparison to other market segments. Given this variation, the hotel should consider the market segment when calculating the probability of cancellation for a booking.
+
+### **agent**
 ```{r}
 chotels$agent <- as.factor(chotels$agent)
-nlevels(chotels$agent)
-sort(summary(chotels$agent), decreasing = TRUE) [1:10]
-ccancelledbyagent <- tapply(chotels$is_canceled, chotels$agent, mean, na.rm = TRUE)
-sort(ccancelledbyagent, decreasing = TRUE) [1:10]
+sort(summary(chotels$agent), decreasing = TRUE)
 ```
 
-**total_of_special_requests** <-- how to filter with > 100 bookings?
+*Variable Validation: though this variable has enough variation, not every agent has a significant sample size. Therefore, when analyzing the cancellation rates, we will omit agents with less than 1000 bookings.
+```{r}
+sort(summary(chotels$agent), decreasing = TRUE) [1:11]
+ccancelledbyagent <- tapply(chotels$is_canceled, chotels$agent, mean, na.rm = TRUE)
+sort(ccancelledbyagent, decreasing = TRUE)
+```
+
+The agents with the highest number of bookings are 9, 1, and 14, and their cancellation rates are about 0.42, 0.73, and 0.18, respectively.
+
+This variation shows that the cancellation rates are independent from the total number of bookings, so the agent of the booking should be considered when calculating the probability of cancellation (if there has been at least 1000 bookings before).
+
+### **total_of_special_requests** 
 ```{r}
 chotels$total_of_special_requests <- as.factor(chotels$total_of_special_requests)
-nlevels(chotels$total_of_special_requests)
 sort(summary(chotels$total_of_special_requests), decreasing = TRUE)
+```
+
+*Variable Validation: though this variable has enough variation, not every number has a significant sample size. Therefore, when analyzing the cancellation rates, we will omit numbers with less than 1000 bookings.
+```{r}
+sort(summary(chotels$total_of_special_requests), decreasing = TRUE) [1:4]
 ccancelledbyrequest <- tapply(chotels$is_canceled, chotels$total_of_special_requests, mean, na.rm = TRUE)
 sort(ccancelledbyrequest, decreasing = TRUE)
 ```
 
-**cancellations by number of adults and children**
-```{r, fig.width = 15}
-#, fig.height = 5}
-colorPlot <- function(name, h = hotels){
-
-  ifelse(name == "City Hotel", x <- chotels, x<- rhotels)
-   #      ifelse(thing == "Airline", x <- n$carrier, x <- n$timeofday))
-  
-  a <- as.data.frame( aggregate(is_canceled ~ adults + children, data = x, mean, na.rm = TRUE) )
-  
-  SEQ <- function(x){
-    return (seq(0, x, by = 1))
-  }
-  
-  qplot(a$adults,
-        a$children,
-        color = a$is_canceled,
-        size = I(10),
-        geom = "point",
-        alpha = I(1),
-        xlab = "Adults",
-        ylab = "Children") +
-    
-    scale_color_gradient(
-      limits = c(0, max(a$is_canceled)),
-      low = "green", high = "red",
-      name = "Cancellation Probability") +
-    
-    ggtitle(paste("Cancellation Probability as a Function of Number of\n Adults and Children for", name)) +
-    
-    theme( plot.title = element_text( hjust = 0.5 ) ) +
-    theme( panel.grid.minor = element_blank() ) +
-    theme_bw()
-    
-    #scale_x_continuous(labels = SEQ(6), breaks = SEQ(6)) +
-    #scale_y_continuous(labels = SEQ(8), breaks = SEQ(8))
-    
-}
-
-plot1 <- colorPlot(name = "City Hotel")
-plot2 <- colorPlot(name = "Resort Hotel")
-grid.arrange(plot1, plot2, ncol=2)
-
-#par(mfrow = c(1,2))
-
-
-
-```
-###Graphs
-
-```{r}
-#ALL THE GRAPHS!!!
-weekend_cancellations_by_hotel("Resort")
-weeknight_cancellations_by_hotel("Resort")
-week_end_colorPlot(name = "Resort Hotel")#, minNumber = 5)
-week_end_colorPlot(name = "Resort Hotel", minNumber = 70)
-adultChild_colorPlot(name = "Resort Hotel", minNumber = 5)
-adultChild_colorPlot(name = "Resort Hotel", probabilityLimit = 0.9)
-par(mfrow = c(1,2))
-weekend_cancellations_by_hotel("City")
-weekend_cancellations_by_hotel("Resort")
-par(mfrow = c(1,2))
-weeknight_cancellations_by_hotel("City")
-weeknight_cancellations_by_hotel("Resort")
-week_end_colorPlot(name = "City Hotel")#, minNumber = 5)
-adultChild_colorPlot(name = "City Hotel")
-
-```
-### Booking Profile
+As shown in the table above, as the number of special requests increase, the cancellation rate decreases significantly, so this should be considered when calculating the probability of cancellation for a booking.
 
 ## Conclusion
-
