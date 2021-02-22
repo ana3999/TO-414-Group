@@ -8,16 +8,6 @@ output:
     toc_float: yes
 ---
 
-```{r setup, include=FALSE}
-hotels <- read.csv("hotel_bookings.csv")
-rhotels <- hotels[hotels$hotel == "Resort Hotel",]
-chotels <- hotels[hotels$hotel == "City Hotel",]
-knitr::opts_chunk$set(echo = TRUE)
-library(ggplot2)
-# install.packages(gridExtra)
-library(gridExtra)
-```
-
 ## Introduction
 
 In this project, we are utilizing the data set of hotel bookings to address the problem of cancellations. This is an important issue for hotels from a business standpoint, as cancellations result in a loss of potential revenue and limit the optimization of the hotel's service levels. Our analyses of this data set are aimed to help the management teams of both the City Hotel and Resort Hotel to better predict the likelihood of cancellation. With this, the hotels can then employ an overbooking method that can optimize the capacity-based revenue management. 
@@ -26,9 +16,19 @@ In this project, we are utilizing the data set of hotel bookings to address the 
 
 In approaching this data set, we will first separate the data for the City Hotel and the Resort Hotel. For both hotels, we have narrowed down a number of booking features that we believe have a significant correlation with the probability of cancellation. From this, we have developed a profile of probabilities that can be applied to any future bookings. Hotels can then use this profile to calculate the cancellation probability of future bookings and consider the option of overbooking. 
 
+#### Data Set-up
+```{r}
+hotels <- read.csv("hotel_bookings.csv")
+rhotels <- hotels[hotels$hotel == "Resort Hotel",]
+chotels <- hotels[hotels$hotel == "City Hotel",]
+library(ggplot2)
+# install.packages(gridExtra)
+library(gridExtra)
+```
+
 ## Variable  Omission
 
-  This data set provides information on many of the different features of hotel bookings. However, we have realized that not every feature is a useful variable in predicting cancellation probabilities, and thus, have been omitted:
+  This data set provides information on many of the different features of hotel bookings. However, we have realized that not every variable has the potential of predicting cancellation probabilities, and thus, have been omitted:
 
 **Arrival_date_year**: Since these are the years of the recorded bookings, they are not predictive of bookings in future years
 
@@ -188,14 +188,19 @@ sort(summary(chotels$required_car_parking_spaces), decreasing = TRUE) [1:5]
 r_leadtime_cancel <- tapply(rhotels$is_canceled, rhotels$lead_time, mean, na.rm = TRUE)
 plot(r_leadtime_cancel, xlab = "Lead Time in days")
 ```
+As shown in this scatter plot, there is a slight increase in the cancellation probability as the lead time increases. However, this trend also comes along with increasing variation in the cancellation probabilities, as shown by the spread of points. The least amount of variation is under 100 days of lead time. So, we can assume that, in general, a greater lead time has a greater probability of cancellation, but especially if it is under 100 days.
 
 **arrival_date_month**
 ```{r}
 rhotels$arrival_date_month <- as.factor(rhotels$arrival_date_month)
 sort(summary(rhotels$arrival_date_month), decreasing = TRUE)
+```
+*Variable Validation: since this variable has enough variation and each month has a significant sample size, we can proceed to analyzing the cancellation rates without omitting any observations
+```{r}
 rcancelledbymonth <- tapply(rhotels$is_canceled, rhotels$arrival_date_month, mean, na.rm = TRUE)
 sort(rcancelledbymonth, decreasing = TRUE)
 ```
+As shown in the table, August, June, and September have had the highest cancellation rates in the past 3 years. Given their cancellation probabilities of about 0.32-0.33, bookings in these months are important to be wary of, especially in combination with other variables that have high probabilities of cancellation.
 
 **Stays_in_weekend_nights**
 ```{r}
@@ -230,6 +235,9 @@ r_cancel_babies
 rhotels$country <- as.factor(rhotels$country)
 nlevels(rhotels$country)
 sort(summary(rhotels$country), decreasing = TRUE)
+```
+
+```{r}
 rcancelledbycountry <- tapply(rhotels$is_canceled, rhotels$country, mean, na.rm = TRUE)
 sort(rcancelledbycountry, decreasing = TRUE)
 ```
@@ -272,14 +280,19 @@ sort(rcancelledbyrequest, decreasing = TRUE)
 c_leadtime_cancel <- tapply(chotels$is_canceled, chotels$lead_time, mean, na.rm = TRUE)
 plot(c_leadtime_cancel, xlab = "Lead Time in days")
 ```
+As shown in this scatter plot, there is a significant increase in the cancellation probability as the lead time increases. Though there is some variation, the overall trend is quite strong. Overall, we can assume that a greater lead time has a greater probability of cancellation. 
 
 **arrival_date_month**
 ```{r}
 chotels$arrival_date_month <- as.factor(chotels$arrival_date_month)
 sort(summary(chotels$arrival_date_month), decreasing = TRUE)
+```
+*Variable Validation: since this variable has enough variation and each month has a significant sample size, we can proceed to analyzing the cancellation rates without omitting any observations
+```{r}
 ccancelledbymonth <- tapply(chotels$is_canceled, chotels$arrival_date_month, mean, na.rm = TRUE)
 sort(ccancelledbymonth, decreasing = TRUE)
 ```
+As shown in the table, April, June, and May have had the highest cancellation rates in the past 3 years. With their cancellation probabilities of about 0.44-0.46, bookings in these months are important to be wary of. 
 
 **Stays_in_weekend_nights**
 ```{r}
