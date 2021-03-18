@@ -28,6 +28,10 @@ plot(pressure)
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+library(tidyverse)
+```
+
 
 ```{r}
 listings <- read.csv("ProjectA_Listings2013.csv")
@@ -38,6 +42,14 @@ listings$loan_status <- as.factor(listings$loan_status)
 listings$prosper_score <- as.factor(listings$prosper_score)
 listings$listing_category_id <- as.factor(listings$listing_category_id)
 listings$income_range <- as.factor(listings$income_range)
-
+listings$lender_indicator <- as.factor(listings$lender_indicator)
+```
+```{r}
+m1 <- lm(borrower_rate ~ principal_balance + loan_status + amount_funded + prosper_rating + listing_monthly_payment + prosper_score + listing_category_id + income_range + stated_monthly_income + employment_status_description + occupation + months_employed + lender_indicator + monthly_debt + current_delinquencies + delinquencies_last7_years + credit_lines_last7_years + inquiries_last6_months + amount_delinquent + current_credit_lines + open_credit_lines + bankcard_utilization + total_open_revolving_accounts + installment_balance + real_estate_balance + revolving_balance + real_estate_payment + revolving_available_percent + total_inquiries + total_trade_items + satisfactory_accounts + now_delinquent_derog + was_delinquent_derog + delinquencies_over30_days + delinquencies_over60_days + delinquencies_over90_days + is_homeowner, data = listings)
+summary(m1)
+```
+```{r}
+m2 <- lm(borrower_rate ~ principal_balance + loan_status + amount_funded + prosper_rating + listing_monthly_payment + stated_monthly_income + employment_status_description + occupation +  lender_indicator + inquiries_last6_months + amount_delinquent + current_credit_lines + open_credit_lines + bankcard_utilization + total_open_revolving_accounts + real_estate_balance + revolving_balance + revolving_available_percent + total_inquiries + delinquencies_over30_days + is_homeowner, data = listings)
+summary(m2)
 ```
 
