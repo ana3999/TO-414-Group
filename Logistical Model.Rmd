@@ -1,0 +1,45 @@
+---
+title: "Project 2"
+author: "Ana Imam"
+date: "3/17/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+listings <- read.csv("ProjectA_Listings2013.csv", stringsAsFactors = TRUE)
+listings$is_homeowner <- as.factor(listings$is_homeowner)
+listings$employment_status_description <- as.factor(listings$employment_status_description)
+listings$occupation <- as.factor(listings$occupation)
+listings$borrower_state <- as.factor(listings$borrower_state)
+
+listings$loan_status <- as.factor(listings$loan_status)
+
+logit.model1 <- glm(loan_status ~ principal_balance + borrower_rate + listing_monthly_payment + listing_category_id + income_range + dti_wprosper_loan + employment_status_description + occupation + months_employed + borrower_state + current_delinquencies + delinquencies_last7_years + public_records_last12_months + inquiries_last6_months + current_credit_lines + open_credit_lines + total_open_revolving_accounts + installment_balance + real_estate_balance + revolving_balance + real_estate_payment + revolving_available_percent	+ total_inquiries + satisfactory_accounts + now_delinquent_derog + was_delinquent_derog + delinquencies_over30_days + delinquencies_over60_days + delinquencies_over90_days + is_homeowner, data = listings, family = "binomial")
+summary(logit.model1)
+
+significant_columns <- coef(summary(logit.model1))
+final_columns <- significant_columns[significant_columns[,"Pr(>|z|)"] < 0.05,]
+
+
+```
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
