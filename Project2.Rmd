@@ -49,7 +49,26 @@ m1 <- lm(borrower_rate ~ principal_balance + loan_status + amount_funded + prosp
 summary(m1)
 ```
 ```{r}
-m2 <- lm(borrower_rate ~ principal_balance + loan_status + amount_funded + prosper_rating + listing_monthly_payment + stated_monthly_income + employment_status_description + occupation +  lender_indicator + inquiries_last6_months + amount_delinquent + current_credit_lines + open_credit_lines + bankcard_utilization + total_open_revolving_accounts + real_estate_balance + revolving_balance + revolving_available_percent + total_inquiries + delinquencies_over30_days + is_homeowner, data = listings)
+m2 <- lm(borrower_rate ~ principal_balance + loan_status + amount_funded + prosper_rating + listing_monthly_payment + stated_monthly_income + employment_status_description + occupation + lender_indicator + inquiries_last6_months + amount_delinquent + current_credit_lines + open_credit_lines + bankcard_utilization + total_open_revolving_accounts + real_estate_balance + revolving_balance + revolving_available_percent + total_inquiries + delinquencies_over30_days + is_homeowner, data = listings)
 summary(m2)
 ```
+```{r}
+## Interaction between stated_monthly_income and occupation
+m3 <- lm(borrower_rate ~ principal_balance + loan_status + amount_funded + prosper_rating + listing_monthly_payment + stated_monthly_income * occupation + employment_status_description + lender_indicator + inquiries_last6_months + amount_delinquent + current_credit_lines + open_credit_lines + bankcard_utilization + total_open_revolving_accounts + real_estate_balance + revolving_balance + revolving_available_percent + total_inquiries + delinquencies_over30_days + is_homeowner, data = listings)
+
+```
+We did not display the result due to excessive length, however the interaction was not significant
+```{r}
+## Interaction between loan_status and delinquencies_over30_days
+m4 <- lm(borrower_rate ~ principal_balance + amount_funded + loan_status * delinquencies_over30_days + prosper_rating + listing_monthly_payment + stated_monthly_income + occupation + lender_indicator + employment_status_description + inquiries_last6_months + amount_delinquent + current_credit_lines + open_credit_lines + bankcard_utilization + total_open_revolving_accounts + real_estate_balance + revolving_balance + revolving_available_percent + total_inquiries +  is_homeowner, data = listings)
+```
+1 of the 3 interactions between these two variables was significant, but it didn't change the R squared, so we won't include it.
+
+```{r}
+## Interaction between employment status and deliquencies over 30 days
+m5 <- lm(borrower_rate ~ principal_balance + amount_funded + loan_status + prosper_rating + listing_monthly_payment + stated_monthly_income + occupation + lender_indicator + employment_status_description * delinquencies_over30_days + inquiries_last6_months + amount_delinquent + current_credit_lines + open_credit_lines + bankcard_utilization + total_open_revolving_accounts + real_estate_balance + revolving_balance + revolving_available_percent + total_inquiries +  is_homeowner, data = listings)
+
+```
+Not significant
+
 
