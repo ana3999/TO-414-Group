@@ -92,15 +92,22 @@ As you can see, the errors are evenly distributed across both underestimating an
 
 ## Logistical Regression
 ```{r}
-
+#control=glm.control(maxit=50)
 logit.model1 <- glm(loan_status_def ~ prosper_rating + listing_monthly_payment + scorex + prosper_score + listing_category_id + income_range + stated_monthly_income + employment_status_description + occupation + months_employed + lender_indicator + monthly_debt + current_delinquencies + delinquencies_last7_years + credit_lines_last7_years + inquiries_last6_months + amount_delinquent + current_credit_lines + open_credit_lines + bankcard_utilization + total_open_revolving_accounts + installment_balance + real_estate_balance + revolving_balance + real_estate_payment + revolving_available_percent + total_inquiries + total_trade_items + satisfactory_accounts + now_delinquent_derog + was_delinquent_derog + delinquencies_over30_days + delinquencies_over60_days + delinquencies_over90_days + is_homeowner, data = listings_train, family = "binomial")
 summary(logit.model1)
+```
+
+The variables *total_trade_items*, *now_delinquent_derog* and *delinquencies_over90_days* resulted in singularities in the previous model **(WHY???) - possibly because they strongly correlate with other included variables?**, so they were removed from the following model:
+
+```{r}
+logit.model2 <- glm(loan_status_def ~ prosper_rating + listing_monthly_payment + scorex + prosper_score + listing_category_id + income_range + stated_monthly_income + employment_status_description + occupation + months_employed + lender_indicator + monthly_debt + current_delinquencies + delinquencies_last7_years + credit_lines_last7_years + inquiries_last6_months + amount_delinquent + current_credit_lines + open_credit_lines + bankcard_utilization + total_open_revolving_accounts + installment_balance + real_estate_balance + revolving_balance + real_estate_payment + revolving_available_percent + total_inquiries + satisfactory_accounts + was_delinquent_derog + delinquencies_over30_days + delinquencies_over60_days + is_homeowner, data = listings_train, family = "binomial")
+summary(logit.model2)
 
 ```
 ```{r}
-test_set_labels <- listings[test_set, "]
-default_probs <- predict(finalmodel, newdata = listings_test, type = "response")
-summary(probs)
-default_pred <- ifelse(probs > .5, 1, 0)
+#test_set_labels <- listings[test_set, "]
+#default_probs <- predict(finalmodel, newdata = listings_test, type = "response")
+#summary(probs)
+#default_pred <- ifelse(probs > .5, 1, 0)
 ```
 
