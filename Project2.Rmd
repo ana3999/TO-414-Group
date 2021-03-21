@@ -29,6 +29,11 @@ listings$listing_category_id <- as.factor(listings$listing_category_id)
 listings$income_range <- as.factor(listings$income_range)
 listings$lender_indicator <- as.factor(listings$lender_indicator)
 listings$scorex <- as.factor(listings$scorex)
+
+listings$loan_status_def <- ifelse(listings$loan_status == 3 | listings$loan_status == 2, 1, 0)
+listings$loan_status_def <- as.factor(listings$loan_status_def)
+str(listings$loan_status_def)
+summary(listings$loan_status_def)
 ```
 ```{r}
 set.seed(123)
@@ -84,3 +89,18 @@ summary(train_data_frame$PE)
 summary(train_data_frame$APE)
 ```
 As you can see, the errors are evenly distributed across both underestimating and overestimating the borrower rate, with 75% of the predictions being less than 10% off. This helps support the strength of our model as an accurate predictor of the borrower rate.
+
+## Logistical Regression
+```{r}
+
+logit.model1 <- glm(loan_status_def ~ prosper_rating + listing_monthly_payment + scorex + prosper_score + listing_category_id + income_range + stated_monthly_income + employment_status_description + occupation + months_employed + lender_indicator + monthly_debt + current_delinquencies + delinquencies_last7_years + credit_lines_last7_years + inquiries_last6_months + amount_delinquent + current_credit_lines + open_credit_lines + bankcard_utilization + total_open_revolving_accounts + installment_balance + real_estate_balance + revolving_balance + real_estate_payment + revolving_available_percent + total_inquiries + total_trade_items + satisfactory_accounts + now_delinquent_derog + was_delinquent_derog + delinquencies_over30_days + delinquencies_over60_days + delinquencies_over90_days + is_homeowner, data = listings_train, family = "binomial")
+summary(logit.model1)
+
+```
+```{r}
+test_set_labels <- listings[test_set, "]
+default_probs <- predict(finalmodel, newdata = listings_test, type = "response")
+summary(probs)
+default_pred <- ifelse(probs > .5, 1, 0)
+```
+
