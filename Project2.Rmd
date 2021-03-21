@@ -11,23 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
-```{r cars}
-summary(cars)
-```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
 ```{r}
 library(tidyverse)
 ```
@@ -43,32 +28,59 @@ listings$prosper_score <- as.factor(listings$prosper_score)
 listings$listing_category_id <- as.factor(listings$listing_category_id)
 listings$income_range <- as.factor(listings$income_range)
 listings$lender_indicator <- as.factor(listings$lender_indicator)
+listings$scorex <- as.factor(listings$scorex)
 ```
 ```{r}
-m1 <- lm(borrower_rate ~ principal_balance + loan_status + amount_funded + prosper_rating + listing_monthly_payment + prosper_score + listing_category_id + income_range + stated_monthly_income + employment_status_description + occupation + months_employed + lender_indicator + monthly_debt + current_delinquencies + delinquencies_last7_years + credit_lines_last7_years + inquiries_last6_months + amount_delinquent + current_credit_lines + open_credit_lines + bankcard_utilization + total_open_revolving_accounts + installment_balance + real_estate_balance + revolving_balance + real_estate_payment + revolving_available_percent + total_inquiries + total_trade_items + satisfactory_accounts + now_delinquent_derog + was_delinquent_derog + delinquencies_over30_days + delinquencies_over60_days + delinquencies_over90_days + is_homeowner, data = listings)
+set.seed(123)
+test_set <- sample(1:nrow(listings), 0.3 * nrow(listings))
+listings_train <- listings[-test_set,]
+listings_test <- listings[test_set,]
+
+```
+
+```{r}
+m1 <- lm(borrower_rate ~ prosper_rating + listing_monthly_payment + scorex + prosper_score + listing_category_id + income_range + stated_monthly_income + employment_status_description + occupation + months_employed + lender_indicator + monthly_debt + current_delinquencies + delinquencies_last7_years + credit_lines_last7_years + inquiries_last6_months + amount_delinquent + current_credit_lines + open_credit_lines + bankcard_utilization + total_open_revolving_accounts + installment_balance + real_estate_balance + revolving_balance + real_estate_payment + revolving_available_percent + total_inquiries + total_trade_items + satisfactory_accounts + now_delinquent_derog + was_delinquent_derog + delinquencies_over30_days + delinquencies_over60_days + delinquencies_over90_days + is_homeowner, data = listings_train)
 summary(m1)
 ```
 ```{r}
-m2 <- lm(borrower_rate ~ principal_balance + loan_status + amount_funded + prosper_rating + listing_monthly_payment + stated_monthly_income + employment_status_description + occupation + lender_indicator + inquiries_last6_months + amount_delinquent + current_credit_lines + open_credit_lines + bankcard_utilization + total_open_revolving_accounts + real_estate_balance + revolving_balance + revolving_available_percent + total_inquiries + delinquencies_over30_days + is_homeowner, data = listings)
-summary(m2)
+## Remove insignificant variables
+m2 <- lm(borrower_rate ~ prosper_rating + listing_monthly_payment + scorex + prosper_score + listing_category_id + income_range + stated_monthly_income + employment_status_description + occupation + lender_indicator + inquiries_last6_months + current_credit_lines + open_credit_lines +   total_inquiries + delinquencies_over30_days + delinquencies_over60_days, data = listings_train)
+```
+Due to the length, the output will not be shown, but most variables were significant except for current_credit_lines, open_credit_lines, and delinquencies_over60_days.
+```{r}
+## Remove insignificant variables again
+m3 <- lm(borrower_rate ~ prosper_rating + listing_monthly_payment + scorex + prosper_score + listing_category_id + income_range + stated_monthly_income + employment_status_description + occupation + lender_indicator + inquiries_last6_months + total_inquiries + delinquencies_over30_days, data = listings_train)
+summary(m3)
 ```
 ```{r}
 ## Interaction between stated_monthly_income and occupation
-m3 <- lm(borrower_rate ~ principal_balance + loan_status + amount_funded + prosper_rating + listing_monthly_payment + stated_monthly_income * occupation + employment_status_description + lender_indicator + inquiries_last6_months + amount_delinquent + current_credit_lines + open_credit_lines + bankcard_utilization + total_open_revolving_accounts + real_estate_balance + revolving_balance + revolving_available_percent + total_inquiries + delinquencies_over30_days + is_homeowner, data = listings)
-
+m4 <- lm(borrower_rate ~ prosper_rating + listing_monthly_payment + scorex + prosper_score + listing_category_id + income_range + stated_monthly_income * occupation + employment_status_description + lender_indicator + inquiries_last6_months + current_credit_lines + open_credit_lines +   total_inquiries + delinquencies_over30_days + delinquencies_over60_days, data = listings_train)
 ```
-We did not display the result due to excessive length, however the interaction was not significant
-```{r}
-## Interaction between loan_status and delinquencies_over30_days
-m4 <- lm(borrower_rate ~ principal_balance + amount_funded + loan_status * delinquencies_over30_days + prosper_rating + listing_monthly_payment + stated_monthly_income + occupation + lender_indicator + employment_status_description + inquiries_last6_months + amount_delinquent + current_credit_lines + open_credit_lines + bankcard_utilization + total_open_revolving_accounts + real_estate_balance + revolving_balance + revolving_available_percent + total_inquiries +  is_homeowner, data = listings)
-```
-1 of the 3 interactions between these two variables was significant, but it didn't change the R squared, so we won't include it.
+Due to the length of the output, it is not shown here, but most of the interactions were not significant so it will not be included in the final model.
 
 ```{r}
-## Interaction between employment status and deliquencies over 30 days
-m5 <- lm(borrower_rate ~ principal_balance + amount_funded + loan_status + prosper_rating + listing_monthly_payment + stated_monthly_income + occupation + lender_indicator + employment_status_description * delinquencies_over30_days + inquiries_last6_months + amount_delinquent + current_credit_lines + open_credit_lines + bankcard_utilization + total_open_revolving_accounts + real_estate_balance + revolving_balance + revolving_available_percent + total_inquiries +  is_homeowner, data = listings)
-
+## Interaction between employment status and delinquencies over 30 days
+m5 <- lm(borrower_rate ~ prosper_rating + listing_monthly_payment + scorex + prosper_score + listing_category_id + income_range + stated_monthly_income + employment_status_description * delinquencies_over30_days + occupation + lender_indicator + inquiries_last6_months + total_inquiries, data = listings_train)
 ```
-Not significant
+Not significant either
+
+As you can see, our model without any interactions has an R squared value of .9439, while the interactions are insignificant and do not really increase that value. Therefore, we can conclude that the variables in Model m3 are the ones used to determine an individual's loan rate.
 
 
+```{r}
+## Testing model against test data
+train_rate <- predict(m3, newdata = listings_test, type = "response")
+
+train_data_frame <- data.frame(prediction = train_rate, actual = listings_test$borrower_rate)
+train_data_frame$error <- train_data_frame$actual - train_data_frame$prediction
+train_data_frame$AE <- abs(train_data_frame$error)
+train_data_frame$PE <- train_data_frame$error/train_data_frame$actual
+train_data_frame$APE <- abs(train_data_frame$PE)
+```
+```{r}
+summary(train_data_frame$error)
+summary(train_data_frame$AE)
+summary(train_data_frame$PE)
+summary(train_data_frame$APE)
+```
+As you can see, the errors are evenly distributed across both underestimating and overestimating the borrower rate, with 75% of the predictions being less than 10% off. This helps support the strength of our model as an accurate predictor of the borrower rate.
