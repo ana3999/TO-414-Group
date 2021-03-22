@@ -1,27 +1,19 @@
 ---
-title: "Project2"
-author: "Mihir Zaveri"
+title: "Project 2: Prosper Data Analysis"
+author: "Group 1"
 date: "3/17/2021"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-## R Markdown
-
-
-
+Package set-up and Reading data:
 ```{r}
 library(tidyverse)
-```
-
-
-```{r}
+library(gmodels)
 listings <- read.csv("ProjectA_Listings2013.csv")
 str(listings)
 ```
+
+Factorizing variables:
 ```{r}
 listings$loan_status <- as.factor(listings$loan_status)
 listings$prosper_score <- as.factor(listings$prosper_score)
@@ -29,51 +21,68 @@ listings$listing_category_id <- as.factor(listings$listing_category_id)
 listings$income_range <- as.factor(listings$income_range)
 listings$lender_indicator <- as.factor(listings$lender_indicator)
 listings$scorex <- as.factor(listings$scorex)
-
-listings$loan_status_def <- ifelse(listings$loan_status == 3 | listings$loan_status == 2, 1, 0)
-listings$loan_status_def <- as.factor(listings$loan_status_def)
-str(listings$loan_status_def)
-summary(listings$loan_status_def)
 ```
+
+# 1. Create a linear regression model to determine how interest rate for loans are determined. 
+Essentially, we are getting an idea of what the market considers “credit risks”. We get a sense of how much interest rate premium is demanded by the market for compensating for a specific credit risk.
+
+#### Creating testing and training data sets
 ```{r}
 set.seed(123)
 test_set <- sample(1:nrow(listings), 0.3 * nrow(listings))
 listings_train <- listings[-test_set,]
 listings_test <- listings[test_set,]
-
 ```
 
+#### Model 1
 ```{r}
-m1 <- lm(borrower_rate ~ prosper_rating + listing_monthly_payment + scorex + prosper_score + listing_category_id + income_range + stated_monthly_income + employment_status_description + occupation + months_employed + lender_indicator + monthly_debt + current_delinquencies + delinquencies_last7_years + credit_lines_last7_years + inquiries_last6_months + amount_delinquent + current_credit_lines + open_credit_lines + bankcard_utilization + total_open_revolving_accounts + installment_balance + real_estate_balance + revolving_balance + real_estate_payment + revolving_available_percent + total_inquiries + total_trade_items + satisfactory_accounts + now_delinquent_derog + was_delinquent_derog + delinquencies_over30_days + delinquencies_over60_days + delinquencies_over90_days + is_homeowner, data = listings_train)
+m1 <- lm(borrower_rate ~ prosper_rating + listing_monthly_payment + scorex + prosper_score + listing_category_id + income_range + stated_monthly_income + employment_status_description + occupation + months_employed + lender_indicator + monthly_debt + current_delinquencies + delinquencies_last7_years + credit_lines_last7_years + inquiries_last6_months + current_credit_lines + open_credit_lines + bankcard_utilization + total_open_revolving_accounts + installment_balance + real_estate_balance + revolving_balance + real_estate_payment + revolving_available_percent + total_inquiries + total_trade_items + satisfactory_accounts + now_delinquent_derog + was_delinquent_derog + delinquencies_over30_days + delinquencies_over60_days + delinquencies_over90_days + is_homeowner, data = listings_train)
 summary(m1)
 ```
+
+#### Removing insignificant variables: Model 2
 ```{r}
-## Remove insignificant variables
-m2 <- lm(borrower_rate ~ prosper_rating + listing_monthly_payment + scorex + prosper_score + listing_category_id + income_range + stated_monthly_income + employment_status_description + occupation + lender_indicator + inquiries_last6_months + current_credit_lines + open_credit_lines +   total_inquiries + delinquencies_over30_days + delinquencies_over60_days, data = listings_train)
+m2 <- lm(borrower_rate ~ prosper_rating + listing_monthly_payment + scorex + stated_monthly_income + employment_status_description + occupation + lender_indicator + inquiries_last6_months + current_credit_lines + open_credit_lines + bankcard_utilization + total_open_revolving_accounts + total_inquiries + delinquencies_over60_days, data = listings_train)
+summary(m2)
 ```
-Due to the length, the output will not be shown, but most variables were significant except for current_credit_lines, open_credit_lines, and delinquencies_over60_days.
+
+### Removing insignificant variables again: Model 3
 ```{r}
-## Remove insignificant variables again
-m3 <- lm(borrower_rate ~ prosper_rating + listing_monthly_payment + scorex + prosper_score + listing_category_id + income_range + stated_monthly_income + employment_status_description + occupation + lender_indicator + inquiries_last6_months + total_inquiries + delinquencies_over30_days, data = listings_train)
+m3 <- lm(borrower_rate ~ prosper_rating + listing_monthly_payment + scorex + stated_monthly_income + employment_status_description + occupation + inquiries_last6_months + current_credit_lines + open_credit_lines + bankcard_utilization + total_inquiries, data = listings_train)
 summary(m3)
 ```
+
+Since all variables in Model 3 are significant, we will now test interactions:
+
+#### Interaction between stated_monthly_income and occupation
 ```{r}
-## Interaction between stated_monthly_income and occupation
-m4 <- lm(borrower_rate ~ prosper_rating + listing_monthly_payment + scorex + prosper_score + listing_category_id + income_range + stated_monthly_income * occupation + employment_status_description + lender_indicator + inquiries_last6_months + current_credit_lines + open_credit_lines +   total_inquiries + delinquencies_over30_days + delinquencies_over60_days, data = listings_train)
+m4 <- lm(borrower_rate ~ prosper_rating + listing_monthly_payment + scorex + stated_monthly_income*occupation + employment_status_description + inquiries_last6_months + current_credit_lines + open_credit_lines + bankcard_utilization + total_inquiries, data = listings_train)
+summary(m4)
 ```
-Due to the length of the output, it is not shown here, but most of the interactions were not significant so it will not be included in the final model.
 
+Most of these interactions were not significant so this will not be included in the final model
+
+#### Interaction between prosper_rating and scorex
 ```{r}
-## Interaction between employment status and delinquencies over 30 days
-m5 <- lm(borrower_rate ~ prosper_rating + listing_monthly_payment + scorex + prosper_score + listing_category_id + income_range + stated_monthly_income + employment_status_description * delinquencies_over30_days + occupation + lender_indicator + inquiries_last6_months + total_inquiries, data = listings_train)
+m5 <- lm(borrower_rate ~ prosper_rating*scorex + listing_monthly_payment + stated_monthly_income + employment_status_description + occupation + inquiries_last6_months + current_credit_lines + open_credit_lines + bankcard_utilization + total_inquiries, data = listings_train)
+summary(m5)
 ```
-Not significant either
 
-As you can see, our model without any interactions has an R squared value of .9439, while the interactions are insignificant and do not really increase that value. Therefore, we can conclude that the variables in Model m3 are the ones used to determine an individual's loan rate.
+Most of these interactions were not significant so this will not be included in the final model
 
-
+#### Interaction between current_credit_lines and bankcard_utilization
 ```{r}
-## Testing model against test data
+m6 <- lm(borrower_rate ~ prosper_rating + listing_monthly_payment + scorex + stated_monthly_income + employment_status_description + occupation + inquiries_last6_months + current_credit_lines*bankcard_utilization + open_credit_lines + total_inquiries, data = listings_train)
+summary(m6)
+```
+
+This interaction is also not significant
+
+As you can see, our Model 3 had the highest R squared value of 0.9399, with all variables being significant. Those some of the interactions increased the R squared value, most of the interaction variables were insignificant, so the interactions were omitted.
+Therefore, we can conclude that the variables in Model 3 are what the market considers to be “credit risks” and are used to determine the borrower's rate.
+
+### Testing model against test data
+```{r}
 train_rate <- predict(m3, newdata = listings_test, type = "response")
 
 train_data_frame <- data.frame(prediction = train_rate, actual = listings_test$borrower_rate)
@@ -88,26 +97,82 @@ summary(train_data_frame$AE)
 summary(train_data_frame$PE)
 summary(train_data_frame$APE)
 ```
-As you can see, the errors are evenly distributed across both underestimating and overestimating the borrower rate, with 75% of the predictions being less than 10% off. This helps support the strength of our model as an accurate predictor of the borrower rate.
 
-## Logistical Regression
+[REWRITE] As you can see, the errors are evenly distributed across both underestimating and overestimating the borrower rate, with 75% of the predictions being less than 10% off. This helps support the strength of our model as an accurate predictor of the borrower rate.
+
+# Create a logistic model of what factors lead to a loan default. 
+Essentially we want to check our understanding from Model 3:
+Do the variables that the Model 3 showed as credit risks leading to compensatory adjustment in interest rate really cause defaults? 
+Are there other variables which cause default but are not show in Model 3?
+
+#### Creating binomial columns for loan status: 0 = defaulted 1 = not defaulted
+```{r}
+listings$loan_status_def <- ifelse(listings$loan_status == 3 | listings$loan_status == 2, 1, 0)
+listings$loan_status_def <- as.factor(listings$loan_status_def)
+str(listings$loan_status_def)
+summary(listings$loan_status_def)
+```
+
+#### Model 1
 ```{r}
 #control=glm.control(maxit=50)
-logit.model1 <- glm(loan_status_def ~ prosper_rating + listing_monthly_payment + scorex + prosper_score + listing_category_id + income_range + stated_monthly_income + employment_status_description + occupation + months_employed + lender_indicator + monthly_debt + current_delinquencies + delinquencies_last7_years + credit_lines_last7_years + inquiries_last6_months + amount_delinquent + current_credit_lines + open_credit_lines + bankcard_utilization + total_open_revolving_accounts + installment_balance + real_estate_balance + revolving_balance + real_estate_payment + revolving_available_percent + total_inquiries + total_trade_items + satisfactory_accounts + now_delinquent_derog + was_delinquent_derog + delinquencies_over30_days + delinquencies_over60_days + delinquencies_over90_days + is_homeowner, data = listings_train, family = "binomial")
+logit.model1 <- glm(loan_status_def ~ prosper_rating + listing_monthly_payment + scorex + prosper_score + listing_category_id + income_range + stated_monthly_income + employment_status_description + occupation + months_employed + lender_indicator + monthly_debt + current_delinquencies + delinquencies_last7_years + credit_lines_last7_years + inquiries_last6_months + current_credit_lines + open_credit_lines + bankcard_utilization + total_open_revolving_accounts + installment_balance + real_estate_balance + revolving_balance + real_estate_payment + revolving_available_percent + total_inquiries + total_trade_items + satisfactory_accounts + now_delinquent_derog + was_delinquent_derog + delinquencies_over30_days + delinquencies_over60_days + delinquencies_over90_days + is_homeowner, data = listings_train, family = "binomial")
 summary(logit.model1)
 ```
 
-The variables *total_trade_items*, *now_delinquent_derog* and *delinquencies_over90_days* resulted in singularities in the previous model **(WHY???) - possibly because they strongly correlate with other included variables?**, so they were removed from the following model:
+The variables *total_trade_items*, *now_delinquent_derog* and *delinquencies_over90_days* resulted in singularities in the previous model, so they were also removed
 
+#### Removing insignificant variables: Model 2
 ```{r}
-logit.model2 <- glm(loan_status_def ~ prosper_rating + listing_monthly_payment + scorex + prosper_score + listing_category_id + income_range + stated_monthly_income + employment_status_description + occupation + months_employed + lender_indicator + monthly_debt + current_delinquencies + delinquencies_last7_years + credit_lines_last7_years + inquiries_last6_months + amount_delinquent + current_credit_lines + open_credit_lines + bankcard_utilization + total_open_revolving_accounts + installment_balance + real_estate_balance + revolving_balance + real_estate_payment + revolving_available_percent + total_inquiries + satisfactory_accounts + was_delinquent_derog + delinquencies_over30_days + delinquencies_over60_days + is_homeowner, data = listings_train, family = "binomial")
+logit.model2 <- glm(loan_status_def ~ prosper_rating + listing_monthly_payment + stated_monthly_income + monthly_debt + installment_balance + revolving_available_percent + delinquencies_over30_days + delinquencies_over60_days, data = listings_train, family = "binomial")
 summary(logit.model2)
+```
 
-```
+#### Removing insignificant variables again: Model 3
 ```{r}
-#test_set_labels <- listings[test_set, "]
-#default_probs <- predict(finalmodel, newdata = listings_test, type = "response")
-#summary(probs)
-#default_pred <- ifelse(probs > .5, 1, 0)
+logit.model3 <- glm(loan_status_def ~ prosper_rating + listing_monthly_payment + stated_monthly_income + monthly_debt + installment_balance + revolving_available_percent + delinquencies_over30_days, data = listings_train, family = "binomial")
+summary(logit.model3)
 ```
+
+Since all variables in Model 3 are significant, we will now test interactions:
+
+#### Interaction between listing_monthly_payment and stated_monthly_income
+```{r}
+logit.model4 <- glm(loan_status_def ~ prosper_rating + listing_monthly_payment*stated_monthly_income + monthly_debt + installment_balance + revolving_available_percent + delinquencies_over30_days, data = listings_train, family = "binomial")
+summary(logit.model4)
+```
+
+This interaction is significant and decreased the AIC by 4, so it will be included
+
+### Interaction between listing_monthly_payment and stated_monthly_income, and listing_monthly_payment and delinquencies_over30_days
+```{r}
+logit.model5 <- glm(loan_status_def ~ prosper_rating + listing_monthly_payment*stated_monthly_income + monthly_debt + installment_balance + revolving_available_percent + listing_monthly_payment*delinquencies_over30_days, data = listings_train, family = "binomial")
+summary(logit.model5)
+```
+
+This interaction is significant and decrease the AIC further by 2, so it will be included
+
+### Testing model against test data
+```{r}
+test_set_labels <- listings[test_set, "loan_status_def"]
+default_probs <- predict(logit.model5, newdata = listings_test, type = "response")
+summary(default_probs)
+default_pred <- ifelse(default_probs > .15, 1, 0)
+CrossTable(x = test_set_labels, y = default_pred,
+prop.chisq=FALSE)
+```
+
+[WRITE ANALYSIS]
+
+## Arbitrage oppurtunities
+
+In the linear regression model, the variables: scorex, employment_status_description, 
+Occupation, inquiries_last6_months, current_credit_lines, open_credit_lines, and bankcard_utilization total_inquiries are all significant predictors of the borrower rate, however they are not significant predictors of the default rate. That means, there is an opportunity to potentially offer loans at lower interest rates to those individuals who are negatively impacted by those variables, but check the boxes on all the other default predictor variables. 
+
+At the same time, the variables: monthly_debt,  installment_balance, Revolving_available_percent and delinquencies_over30_days are all significant predictors of default rate, but are not significantly used in determining the borrower rate. This means that these variables should be taken into account when calculating borrower rate, and potentially reducing the number of loans given to individuals that are negatively impacted by those variables.
+
+Lastly, the variable “listing_monthly_payment” has a negative coefficient in the linear regression, meaning that as the payment increases, borrower rate decreases. However, in the logistical regression, it has a positive coefficient on its own, meaning that as the payment increases, chance of default increases as well. The coefficient in its interaction with stated_monthly_income is negative, meaning that as income increases, chance of default for every given monthly payment decreases, but in its interaction with “delinquencies_over30_days”, the coefficient is positive. This means that people with delinquencies have a higher chance of defaulting for every monthly payment. While this is very convoluted, it presents an opportunity to do further analysis and find arbitrage opportunities where borrowers are receiving a lower rate than they should and may be at risk of defaulting due to their other delinquencies.
+
+Overall, these models showed that there is a stark difference between the variables used to determine the borrower rate, and the ones that determine defaulting, presenting a wealth of arbitrage opportunities.
+
 
