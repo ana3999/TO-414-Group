@@ -2,7 +2,9 @@
 title: "Project 2: Prosper Data Analysis"
 author: "Group 1"
 date: "3/17/2021"
-output: html_document
+output: 
+  html_document:
+    code_folding: hide
 ---
 
 Package set-up and Reading data:
@@ -10,7 +12,6 @@ Package set-up and Reading data:
 library(tidyverse)
 library(gmodels)
 listings <- read.csv("ProjectA_Listings2013.csv")
-str(listings)
 ```
 
 Factorizing variables:
@@ -21,6 +22,11 @@ listings$listing_category_id <- as.factor(listings$listing_category_id)
 listings$income_range <- as.factor(listings$income_range)
 listings$lender_indicator <- as.factor(listings$lender_indicator)
 listings$scorex <- as.factor(listings$scorex)
+
+```
+#### Creating binomial columns for loan status: 0 = defaulted 1 = not defaulted
+```{r}
+listings$loan_status_def <- ifelse(listings$loan_status == 3 | listings$loan_status == 2, 1, 0)
 ```
 
 # 1. Create a linear regression model to determine how interest rate for loans are determined. 
@@ -34,16 +40,14 @@ listings_train <- listings[-test_set,]
 listings_test <- listings[test_set,]
 ```
 
-#### Model 1
+#### Model 1 with almost all variables included
 ```{r}
 m1 <- lm(borrower_rate ~ prosper_rating + listing_monthly_payment + scorex + prosper_score + listing_category_id + income_range + stated_monthly_income + employment_status_description + occupation + months_employed + lender_indicator + monthly_debt + current_delinquencies + delinquencies_last7_years + credit_lines_last7_years + inquiries_last6_months + current_credit_lines + open_credit_lines + bankcard_utilization + total_open_revolving_accounts + installment_balance + real_estate_balance + revolving_balance + real_estate_payment + revolving_available_percent + total_inquiries + total_trade_items + satisfactory_accounts + now_delinquent_derog + was_delinquent_derog + delinquencies_over30_days + delinquencies_over60_days + delinquencies_over90_days + is_homeowner, data = listings_train)
-summary(m1)
 ```
 
 #### Removing insignificant variables: Model 2
 ```{r}
 m2 <- lm(borrower_rate ~ prosper_rating + listing_monthly_payment + scorex + stated_monthly_income + employment_status_description + occupation + lender_indicator + inquiries_last6_months + current_credit_lines + open_credit_lines + bankcard_utilization + total_open_revolving_accounts + total_inquiries + delinquencies_over60_days, data = listings_train)
-summary(m2)
 ```
 
 ### Removing insignificant variables again: Model 3
@@ -57,7 +61,6 @@ Since all variables in Model 3 are significant, we will now test interactions:
 #### Interaction between stated_monthly_income and occupation
 ```{r}
 m4 <- lm(borrower_rate ~ prosper_rating + listing_monthly_payment + scorex + stated_monthly_income*occupation + employment_status_description + inquiries_last6_months + current_credit_lines + open_credit_lines + bankcard_utilization + total_inquiries, data = listings_train)
-summary(m4)
 ```
 
 Most of these interactions were not significant so this will not be included in the final model
@@ -65,7 +68,6 @@ Most of these interactions were not significant so this will not be included in 
 #### Interaction between prosper_rating and scorex
 ```{r}
 m5 <- lm(borrower_rate ~ prosper_rating*scorex + listing_monthly_payment + stated_monthly_income + employment_status_description + occupation + inquiries_last6_months + current_credit_lines + open_credit_lines + bankcard_utilization + total_inquiries, data = listings_train)
-summary(m5)
 ```
 
 Most of these interactions were not significant so this will not be included in the final model
@@ -73,7 +75,6 @@ Most of these interactions were not significant so this will not be included in 
 #### Interaction between current_credit_lines and bankcard_utilization
 ```{r}
 m6 <- lm(borrower_rate ~ prosper_rating + listing_monthly_payment + scorex + stated_monthly_income + employment_status_description + occupation + inquiries_last6_months + current_credit_lines*bankcard_utilization + open_credit_lines + total_inquiries, data = listings_train)
-summary(m6)
 ```
 
 This interaction is also not significant
@@ -91,33 +92,36 @@ train_data_frame$AE <- abs(train_data_frame$error)
 train_data_frame$PE <- train_data_frame$error/train_data_frame$actual
 train_data_frame$APE <- abs(train_data_frame$PE)
 ```
+Calculating Error, Absolute Error, Percentage Error, and Absolute Percentage Error, respectively
 ```{r}
 summary(train_data_frame$error)
+```
+Absolute Error
+```{r}
 summary(train_data_frame$AE)
+```
+Percentage Error
+```{r}
 summary(train_data_frame$PE)
+```
+Absolute Percentage Error
+```{r}
 summary(train_data_frame$APE)
 ```
 
-[REWRITE] As you can see, the errors are evenly distributed across both underestimating and overestimating the borrower rate, with 75% of the predictions being less than 10% off. This helps support the strength of our model as an accurate predictor of the borrower rate.
+As you can see, the errors are evenly distributed across both underestimating and overestimating the borrower rate, with around 75% of the predictions being less than 10% off. This helps support the strength of our model as an accurate predictor of the borrower rate.
 
 # Create a logistic model of what factors lead to a loan default. 
 Essentially we want to check our understanding from Model 3:
 Do the variables that the Model 3 showed as credit risks leading to compensatory adjustment in interest rate really cause defaults? 
 Are there other variables which cause default but are not show in Model 3?
 
-#### Creating binomial columns for loan status: 0 = defaulted 1 = not defaulted
-```{r}
-listings$loan_status_def <- ifelse(listings$loan_status == 3 | listings$loan_status == 2, 1, 0)
-listings$loan_status_def <- as.factor(listings$loan_status_def)
-str(listings$loan_status_def)
-summary(listings$loan_status_def)
-```
+
 
 #### Model 1
 ```{r}
 #control=glm.control(maxit=50)
 logit.model1 <- glm(loan_status_def ~ prosper_rating + listing_monthly_payment + scorex + prosper_score + listing_category_id + income_range + stated_monthly_income + employment_status_description + occupation + months_employed + lender_indicator + monthly_debt + current_delinquencies + delinquencies_last7_years + credit_lines_last7_years + inquiries_last6_months + current_credit_lines + open_credit_lines + bankcard_utilization + total_open_revolving_accounts + installment_balance + real_estate_balance + revolving_balance + real_estate_payment + revolving_available_percent + total_inquiries + total_trade_items + satisfactory_accounts + now_delinquent_derog + was_delinquent_derog + delinquencies_over30_days + delinquencies_over60_days + delinquencies_over90_days + is_homeowner, data = listings_train, family = "binomial")
-summary(logit.model1)
 ```
 
 The variables *total_trade_items*, *now_delinquent_derog* and *delinquencies_over90_days* resulted in singularities in the previous model, so they were also removed
@@ -125,13 +129,11 @@ The variables *total_trade_items*, *now_delinquent_derog* and *delinquencies_ove
 #### Removing insignificant variables: Model 2
 ```{r}
 logit.model2 <- glm(loan_status_def ~ prosper_rating + listing_monthly_payment + stated_monthly_income + monthly_debt + installment_balance + revolving_available_percent + delinquencies_over30_days + delinquencies_over60_days, data = listings_train, family = "binomial")
-summary(logit.model2)
 ```
 
 #### Removing insignificant variables again: Model 3
 ```{r}
 logit.model3 <- glm(loan_status_def ~ prosper_rating + listing_monthly_payment + stated_monthly_income + monthly_debt + installment_balance + revolving_available_percent + delinquencies_over30_days, data = listings_train, family = "binomial")
-summary(logit.model3)
 ```
 
 Since all variables in Model 3 are significant, we will now test interactions:
@@ -139,7 +141,6 @@ Since all variables in Model 3 are significant, we will now test interactions:
 #### Interaction between listing_monthly_payment and stated_monthly_income
 ```{r}
 logit.model4 <- glm(loan_status_def ~ prosper_rating + listing_monthly_payment*stated_monthly_income + monthly_debt + installment_balance + revolving_available_percent + delinquencies_over30_days, data = listings_train, family = "binomial")
-summary(logit.model4)
 ```
 
 This interaction is significant and decreased the AIC by 4, so it will be included
@@ -156,13 +157,12 @@ This interaction is significant and decrease the AIC further by 2, so it will be
 ```{r}
 test_set_labels <- listings[test_set, "loan_status_def"]
 default_probs <- predict(logit.model5, newdata = listings_test, type = "response")
-summary(default_probs)
 default_pred <- ifelse(default_probs > .15, 1, 0)
 CrossTable(x = test_set_labels, y = default_pred,
 prop.chisq=FALSE)
 ```
 
-[WRITE ANALYSIS]
+As you can see from this confusion matrix, true negatives were predicted correctly 68.2% of the time, and true positives were predicted 55.6% of the time. While these are not extremely high values, the model was still correct most of the time. We found that as we increase the correctness of one value, it decreased the correctness of the other, and this was the happiest medium we found.
 
 ## Arbitrage oppurtunities
 
