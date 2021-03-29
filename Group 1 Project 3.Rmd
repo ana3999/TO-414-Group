@@ -1,0 +1,32 @@
+---
+title: "Project#3: Prediction"
+author: "Group 1"
+date: "3/29/2021"
+output: html_document
+---
+
+```{r}
+resume <- read.csv("ResumeNames.csv", stringsAsFactors = TRUE)
+library(lmtest)
+library(aod)
+library(VGAM)
+resume$name <- NULL
+resume$X <- NULL
+resume$minimum <- as.integer(resume$minimum)
+str(resume)
+```
+
+
+```{r}
+lm1 <- glm(call ~ ., data = resume, family = "binomial")
+summary(lm1)
+```
+
+```{r}
+steplm1 <- step(lm1)
+```
+
+```{r}
+summary(steplm1)
+```
+
