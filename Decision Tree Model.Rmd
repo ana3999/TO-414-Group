@@ -1,0 +1,62 @@
+---
+title: "Resume Names Decision Tree Model"
+author: "Ana Imam"
+date: "4/11/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+### Read and Clean Data
+```{r}
+resumeNames <- read.csv("ResumeNames.csv", stringsAsFactors = TRUE)
+
+summary(resumeNames)
+```
+
+### Create Train and Test Sets
+```{r}
+library(C50)
+set.seed(12345)
+
+test_rows <- sample(1:nrow(resumeNames), nrow(resumeNames) * .8)
+namesTrain <- resumeNames[-test_rows, ]
+namesTest <- resumeNames[test_rows, ]
+```
+
+### Build a Model for Decision Tree Train Data
+```{r}
+namesModel <- C5.0(as.factor(call) ~ ., data = namesTrain)
+summary(namesTrain)
+
+plot(namesModel)
+```
+
+### Predict the Test Data
+```{r}
+CallPrediction <- predict(namesModel, namesTest)
+
+library(gmodels)
+CrossTable(namesTest$call, CallPrediction)
+```
+
+### Rebalance Errors
+```{r}
+ErrorCost <- matrix(c(0,4,1,0), nrow = 2)
+library(C50)
+
+namesCostModel <- C5.0(as.factor(call) ~., data = namesTrain, costs = ErrorCost)
+CallCostPrediction <- predict(namesModel, namesTest)
+library(gmodels)
+CrossTable(namesTest$call, CallCostPrediction)
+```
+
+
+
+
+
+
