@@ -30,3 +30,40 @@ steplm1 <- step(lm1)
 summary(steplm1)
 ```
 
+## KNN Model
+```{r}
+## Make all factors dummy variables
+resumemm <- as.data.frame(model.matrix(~., resume))
+str(resumemm)
+```
+```{r}
+# Randomize the rows in the data (shuffling the rows)
+set.seed(123)
+res_random <- resumemm[sample(nrow(resumemm)),]
+# #Normalize the data
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+# # we are going to normalize everything 
+resume_norm <- as.data.frame(lapply(res_random, normalize))
+```
+
+```{r}
+## Train and test sets for KNN
+testrows <- sample(1:nrow(resume), 150)
+resume_train <- resume_norm[-testrows,-match("callyes",names(resume_norm))]
+resume_test <- resume_norm[testrows, -match("callyes",names(resume_norm))]
+
+#Now the response (aka Labels) - only the alc column
+res_train_labels <- resume_norm[-testrows, "callyes"]
+res_test_labels <- resume_norm[testrows, "callyes"]
+```
+
+```{r}
+library(class)
+knum <- sqrt(nrow(resume_train))
+
+
+knn_pred <- knn(train = resume_train, test = resume_test, cl = res_train_labels, k=knum)
+```
+
