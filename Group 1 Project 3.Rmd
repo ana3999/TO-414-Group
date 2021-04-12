@@ -33,7 +33,7 @@ summary(steplm1)
 ## KNN Model
 ```{r}
 ## Make all factors dummy variables
-resumemm <- as.data.frame(model.matrix(~., resume))
+resumemm <- as.data.frame(model.matrix(~.-1, resume))
 str(resumemm)
 ```
 ```{r}
@@ -46,17 +46,18 @@ normalize <- function(x) {
 }
 # # we are going to normalize everything 
 resume_norm <- as.data.frame(lapply(res_random, normalize))
+resume_z <- as.data.frame(scale(res_random[-1]))
 ```
 
 ```{r}
 ## Train and test sets for KNN
-testrows <- sample(1:nrow(resume), 150)
-resume_train <- resume_norm[-testrows,-match("callyes",names(resume_norm))]
-resume_test <- resume_norm[testrows, -match("callyes",names(resume_norm))]
+testrows <- sample(1:nrow(resume), 1400)
+resume_train <- resume_z[-testrows,-match("callyes",names(resume_z))]
+resume_test <- resume_z[testrows, -match("callyes",names(resume_z))]
 
-#Now the response (aka Labels) - only the alc column
-res_train_labels <- resume_norm[-testrows, "callyes"]
-res_test_labels <- resume_norm[testrows, "callyes"]
+#Now the response (aka Labels) - only the callyes column
+res_train_labels <- resume_z[-testrows, "callyes"]
+res_test_labels <- resume_z[testrows, "callyes"]
 ```
 
 ```{r}
@@ -65,5 +66,11 @@ knum <- sqrt(nrow(resume_train))
 
 
 knn_pred <- knn(train = resume_train, test = resume_test, cl = res_train_labels, k=knum)
+#summary(resume_train)
+```
+```{r}
+library(gmodels)
+CrossTable(x = res_test_labels, y = knn_pred, 
+           prop.chisq=FALSE)
 ```
 
