@@ -1,0 +1,107 @@
+---
+title: "Project3 Logistic Regression"
+author: "Jihan"
+date: "3/29/2021"
+output: html_document
+---
+
+```{r}
+# Necessary packages
+library(tidyverse)
+library(class)
+library(caret)
+library(gmodels)
+library(lmtest)
+library(aod)
+library(VGAM)
+library(e1071)
+```
+
+Reading + cleaning data:
+```{r}
+resume <- read.csv("ResumeNames.csv", stringsAsFactors = TRUE)
+resume$name <- NULL
+resume$X <- NULL
+resume$minimum <- as.integer(resume$minimum)
+str(resume)
+```
+
+## Logistic Regression Models
+
+Model 1: all variables
+```{r}
+log1 <- glm(call ~ ., data = resume, family = "binomial")
+summary(log1)
+```
+
+Filtering out insignificant variables using step function:
+```{r include=FALSE}
+log2 <- step(lm1)
+```
+
+**Model 2**: significant variables from step function (lowest AIC)
+```{r}
+summary(log2)
+```
+
+Model 3: more significant p-value variables (higher AIC)
+```{r}
+log3 <- glm(call ~ ethnicity + city + jobs + experience + honors + holes + email + special + equal + reqeduc, data = resume, family = "binomial")
+summary(log3)
+```
+
+**Model 4**: model with only most significant p-value variables (higher AIC)
+```{r}
+log4 <- glm(call ~ ethnicity + city + experience + honors + holes + special + reqeduc, data = resume, family = "binomial")
+summary(log4)
+```
+
+## Logistic Regression Predictions
+
+Creating Test and Train data sets (20:80 split)
+```{r}
+set.seed(12345)
+testrows <- sample(1:nrow(resume), 974)
+resumetest <- resume[testrows, ]
+resumetrain <- resume[-testrows, ]
+```
+
+### Model 2: significant variables from step function (lowest AIC)
+
+Confusion Matrix
+```{r}
+log2pred <- ifelse(predict(log2, newdata = resumetest, type = "response") > 0.2, "yes", "no")
+log2pred <- as.factor(log2pred)
+confusionMatrix(log2pred, resumetest$call, positive="yes")
+```
+
+Cross-Table
+```{r}
+CrossTable(x = resumetest$call, log2pred, prop.chisq = FALSE)
+```
+
+### Model 4: model with only most significant p-value variables (higher AIC)
+
+Confusion Matrix
+```{r}
+log4pred <- ifelse(predict(log4, newdata = resumetest, type = "response") > 0.2, "yes", "no")
+log4pred <- as.factor(log4pred)
+confusionMatrix(log4pred, resumetest$call, positive="yes")
+```
+
+Cross-Table
+```{r}
+CrossTable(x = resumetest$call, log4pred, prop.chisq = FALSE)
+```
+
+## Next steps: 
+- decide between Model 2 and Model 4
+- check predictions 
+  - 0.2 ifelse?
+  - confusionMatrix vs. CrossTable?
+  - poor results?
+- do seperate models by industry, wanted (position), ethnicity (only 2)?
+
+
+
+
