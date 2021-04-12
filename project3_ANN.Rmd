@@ -60,3 +60,4 @@ resume_test$ANN_preds <- as.numeric(ifelse(ANN_pred > 0.5, 1, 0))
 confusionMatrix(data = as.factor(resume_test$ANN_preds), reference = as.factor(resume_test$callyes), positive = '1')
 ```
 
+#another ANN model with hidden = 5
