@@ -14,45 +14,56 @@ knitr::opts_chunk$set(echo = TRUE)
 ### Read and Clean Data
 ```{r}
 resumeNames <- read.csv("ResumeNames.csv", stringsAsFactors = TRUE)
+resumeNames$call <- as.factor(resumeNames$call)
 
 summary(resumeNames)
 ```
 
 ### Create Train and Test Sets
 ```{r}
-library(C50)
-set.seed(12345)
+library(caret)
+test_rows <- sample(1:nrow(resumeNames), nrow(resumeNames) * .7)
 
-test_rows <- sample(1:nrow(resumeNames), nrow(resumeNames) * .8)
-namesTrain <- resumeNames[-test_rows, ]
-namesTest <- resumeNames[test_rows, ]
+namesTrain <- (resumeNames[-test_rows, ])
+upSampleTrain <- upSample(x=namesTrain, y = namesTrain$call)
+
+
+namesTest <- (resumeNames[test_rows, ])
+upSampleTest <- upSample(x=namesTest, y = namesTest$call)
 ```
 
 ### Build a Model for Decision Tree Train Data
 ```{r}
-namesModel <- C5.0(as.factor(call) ~ ., data = namesTrain)
-summary(namesTrain)
+library(C50)
+
+namesModel <- C5.0(call ~ ., data = upSampleTrain)
+
+summary(upSampleTrain)
+
+summary(namesModel)
 
 plot(namesModel)
 ```
 
 ### Predict the Test Data
 ```{r}
-CallPrediction <- predict(namesModel, namesTest)
+CallPrediction <- predict(namesModel, upSampleTest)
 
 library(gmodels)
-CrossTable(namesTest$call, CallPrediction)
+CrossTable(upSampleTest$call, CallPrediction)
 ```
 
 ### Rebalance Errors
 ```{r}
-ErrorCost <- matrix(c(0,4,1,0), nrow = 2)
+ErrorCost <- matrix(c(0,1,4,0), nrow = 2)
 library(C50)
 
-namesCostModel <- C5.0(as.factor(call) ~., data = namesTrain, costs = ErrorCost)
-CallCostPrediction <- predict(namesModel, namesTest)
+namesCostModel <- C5.0(as.factor(call) ~., data = upSampleTrain, costs = ErrorCost)
+CallCostPrediction <- predict(namesModel, upSampleTest)
 library(gmodels)
-CrossTable(namesTest$call, CallCostPrediction)
+CrossTable(upSampleTest$call, CallCostPrediction)
+```
+
 ```
 
 
