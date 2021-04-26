@@ -1,0 +1,73 @@
+---
+title: "Project3_ANN"
+author: "Supreet Nirman"
+date: "4/12/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(class)
+library(caret)
+library(gmodels)
+library(lmtest)
+library(aod)
+library(VGAM)
+library(neuralnet)
+library(e1071)
+```
+
+```{r}
+resume <- read.csv("ResumeNames.csv", stringsAsFactors = TRUE)
+
+resume$name <- NULL
+resume$X <- NULL
+resume$minimum <- as.integer(resume$minimum)
+
+resume$call <- as.factor(resume$call)
+
+str(resume)
+```
+
+```{r}
+normalize <- function(x) { 
+  return((x - min(x)) / (max(x) - min(x)))
+}
+
+resumemm <- as.data.frame(model.matrix(~. -1, resume))
+str(resumemm)
+
+set.seed(123)
+res_random <- resumemm[sample(nrow(resumemm)),]
+
+resume_norm <- as.data.frame(lapply(res_random, normalize))
+```
+
+```{r}
+testrows <- sample(1:nrow(resume_norm),0.3*nrow(resume_norm))
+resume_train <- resume_norm[-testrows,]
+resume_test <- resume_norm[testrows, ]
+```
+
+```{r}
+ANN_model1 <- neuralnet(callyes ~ . , data = resume_train, hidden = 1)
+
+ANN_modelresults <- compute(ANN_model1, resume_test)
+ANN_pred <- ANN_modelresults$net.result
+resume_test$ANN_preds <- as.numeric(ifelse(ANN_pred > 0.20, 1, 0))
+
+confusionMatrix(data = as.factor(resume_test$ANN_preds), reference = as.factor(resume_test$callyes), positive = '1')
+
+str(resume_train)
+
+ANN_model2 <- neuralnet(callyes ~ ethnicitycauc + citychicago + jobs + experience + honorsyes + holesyes + emailyes + specialyes + collegeyes + equalyes + reqeducyes + reqcompyes + reqorgyes + industryfinance.insurance.real.estate + industryhealth.education.social.services + industrymanufacturing + industrytrade + industrytransport.communication + industryunknown , data = resume_train, hidden = 1)
+
+ANN_model2results <- compute(ANN_model2, resume_test)
+ANN_pred2 <- ANN_model2results$net.result
+resume_test$ANN_preds <- as.numeric(ifelse(ANN_pred2 > 0.20, 1, 0))
+
+confusionMatrix(data = as.factor(resume_test$ANN_preds), reference = as.factor(resume_test$callyes), positive = '1')
+
+```
+
