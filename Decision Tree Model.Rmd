@@ -14,7 +14,16 @@ knitr::opts_chunk$set(echo = TRUE)
 ### Read and Clean Data
 ```{r}
 resumeNames <- read.csv("ResumeNames.csv", stringsAsFactors = TRUE)
-resumeNames$call <- as.factor(resumeNames$call)
+
+resumeNames$X <- NULL
+
+resumeNames <- as.data.frame(model.matrix(~. -1, resumeNames))
+
+resumeNames$callyes <- as.factor(resumeNames$callyes)
+
+library(janitor)
+
+resumeNames <- clean_names(resumeNames)
 
 summary(resumeNames)
 ```
@@ -25,7 +34,7 @@ library(caret)
 test_rows <- sample(1:nrow(resumeNames), nrow(resumeNames) * .7)
 
 namesTrain <- (resumeNames[-test_rows, ])
-upSampleTrain <- upSample(x=namesTrain, y = namesTrain$call)
+upSampleTrain <- upSample(x=namesTrain, y = as.factor(namesTrain$callyes))
 
 
 namesTest <- (resumeNames[test_rows, ])
@@ -36,7 +45,9 @@ upSampleTest <- upSample(x=namesTest, y = namesTest$call)
 ```{r}
 library(C50)
 
-namesModel <- C5.0(call ~ ., data = upSampleTrain)
+namesModel <- C5.0(callyes ~ ., data = upSampleTrain)
+
+str(upSampleTrain)
 
 summary(upSampleTrain)
 
@@ -51,21 +62,31 @@ CallPrediction <- predict(namesModel, upSampleTest)
 
 library(gmodels)
 CrossTable(upSampleTest$call, CallPrediction)
+
+library(caret)
+
+namesMatrix1 <- confusionMatrix(data = CallPrediction, reference = upSampleTest$callyes)
+namesMatrix1
+
 ```
 
-### Rebalance Errors
+
+### Improved Model
 ```{r}
-ErrorCost <- matrix(c(0,1,4,0), nrow = 2)
-library(C50)
 
-namesCostModel <- C5.0(as.factor(call) ~., data = upSampleTrain, costs = ErrorCost)
-CallCostPrediction <- predict(namesModel, upSampleTest)
+improvedNamesModel <- C5.0(callyes ~ ethnicitycauc + citychicago + jobs + experience + honorsyes + holesyes + emailyes + specialyes + collegeyes + equalyes + reqeducyes + reqcompyes + reqorgyes + industryfinance_insurance_real_estate + industryhealth_education_social_services + industrymanufacturing + industrytrade + industrytransport_communication + industryunknown , data = upSampleTrain)
+str(upSampleTrain)
+
+CallPrediction2 <- predict(improvedNamesModel, upSampleTest)
+
 library(gmodels)
-CrossTable(upSampleTest$call, CallCostPrediction)
-```
+CrossTable(upSampleTest$call, CallPrediction2)
+
+
+namesMatrix2 <- confusionMatrix(data = CallPrediction2, reference = upSampleTest$callyes)
+namesMatrix2
 
 ```
-
 
 
 
