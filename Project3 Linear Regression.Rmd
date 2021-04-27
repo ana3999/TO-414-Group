@@ -26,46 +26,25 @@ resume$name <- NULL
 resume$X <- NULL
 resume$minimum <- as.integer(resume$minimum)
 
-resume <- as.data.frame(model.matrix(~.-1, resume))
+resumemm <- as.data.frame(model.matrix(~.-1, resume))
 
-str(resume)
+str(resumemm)
 ```
 
-Creating Test and Train data sets (20:80 split)
 ```{r}
-set.seed(12345)
-testrows <- sample(1:nrow(resume), 974)
-resumetest <- resume[testrows, ]
-resumetrain <- resume[-testrows, ]
-```
+set.seed(123)
+testrows_3 <- sample(1:nrow(resume), 0.3*nrow(resumemm))
+lm_resumetest <- resume[testrows_3, ]
+lm_resumetrain <- resume[-testrows_3, ]
 
-## Linear Regression Models
+lin1 <- lm(callyes ~ ., data = lm_resumetrain)
 
-Model 1: all variables
-```{r}
-lin1 <- lm(callyes ~ ., data = resumetrain)
-summary(lin1)
-```
-
-use the variables with the most significant p-values
-```{r}
 lin2 <- step(lin1)
-summary(lin2)
-```
 
-use the variables with the most significant p-values
-```{r}
-lin3 <- lm(callyes ~ ethnicitycauc + qualitylow + citychicago + experience + honorsyes + holesyes + specialyes + `wantedoffice support` + reqeducyes +`industrytransport/communication`, data = resumetrain)
+lin3 <- lm(callyes ~ ethnicitycauc + qualitylow + citychicago + experience + honorsyes + holesyes + specialyes + `wantedoffice support` + reqeducyes +`industrytransport/communication`, data = lm_resumetrain)
 
-summary(lin3)
+lin4 <- lm(callyes ~ ethnicitycauc + citychicago + experience + honorsyes + holesyes + specialyes + `wantedoffice support` +`industrytransport/communication`, data = lm_resumetrain)
 
-lin4 <- lm(callyes ~ ethnicitycauc + citychicago + experience + honorsyes + holesyes + specialyes + `wantedoffice support` +`industrytransport/communication`, data = resumetrain)
-
-summary(lin4)
-```
-
-include interactions between pairs of variables
-```{r}
 lin5 <- lm(callyes ~ 
              ethnicitycauc*citychicago + ethnicitycauc*experience + ethnicitycauc*honorsyes + ethnicitycauc*holesyes + ethnicitycauc*specialyes + ethnicitycauc*`wantedoffice support` +ethnicitycauc*`industrytransport/communication` +
              citychicago*experience + citychicago*honorsyes + citychicago*holesyes + citychicago*specialyes + citychicago*`wantedoffice support` + citychicago*`industrytransport/communication` +
@@ -74,38 +53,26 @@ lin5 <- lm(callyes ~
              holesyes*specialyes + holesyes*`wantedoffice support` + holesyes*`industrytransport/communication` +
              specialyes*`wantedoffice support` + specialyes*`industrytransport/communication` +
              `wantedoffice support`*`industrytransport/communication`,
-           data = resumetrain)
+           data = lm_resumetrain)
 
-summary(lin5)
-```
-```{r}
+
 lin6 <- step(lin5)
 lin6 <- lm(callyes ~ ethnicitycauc + citychicago + experience + honorsyes + 
     holesyes + specialyes + `wantedoffice support` + `industrytransport/communication` + 
     ethnicitycauc:specialyes + citychicago:honorsyes + citychicago:specialyes + 
     experience:honorsyes + experience:holesyes + honorsyes:holesyes + 
     honorsyes:specialyes + holesyes:`industrytransport/communication` + 
-    specialyes:`wantedoffice support` + `wantedoffice support`:`industrytransport/communication`, data = resumetrain)
-summary(lin6)
-```
-```{r}
-lin7 <- lm(callyes ~ ethnicitycauc + honorsyes + specialyes + experience:honorsyes + experience:holesyes + specialyes:`wantedoffice support` + `wantedoffice support`:`industrytransport/communication`, data = resumetrain)
-summary(lin7)
+    specialyes:`wantedoffice support` + `wantedoffice support`:`industrytransport/communication`, data = lm_resumetrain)
 
-lin8 <- lm(callyes ~ ethnicitycauc + honorsyes + specialyes + experience:holesyes + specialyes:`wantedoffice support` + `wantedoffice support`:`industrytransport/communication`, data = resumetrain)
-summary(lin8)
-```
+lin7 <- lm(callyes ~ ethnicitycauc + honorsyes + specialyes + experience:honorsyes + experience:holesyes + specialyes:`wantedoffice support` + `wantedoffice support`:`industrytransport/communication`, data = lm_resumetrain)
+
+lin8 <- lm(callyes ~ ethnicitycauc + honorsyes + specialyes + experience:holesyes + specialyes:`wantedoffice support` + `wantedoffice support`:`industrytransport/communication`, data = lm_resumetrain)
 
 
 
-Confusion Matrix
-```{r}
 linPred <- as.factor( ifelse(predict(lin8, newdata = resumetest, type = "response") > 0.15, "1", "0") )
+
+
 confusionMatrix(linPred, as.factor(resumetest$call), positive="1")
-
-```
-
-Cross-Table
-```{r}
 CrossTable(as.factor(resumetest$call), linPred, prop.chisq = FALSE)
 ```
