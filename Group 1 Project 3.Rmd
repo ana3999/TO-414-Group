@@ -32,7 +32,7 @@ str(resume)
 
 ## Introduction
 
-This data set contains different features from 4,870 resumes. The response variable for this data set is whether a candidate was called back for an interview or not. 
+This data set contains different features from 4,870 resumes. The response variable for this data set is whether a candidate was called back for an interview or not. We wanted to see which variables played a role, specifically ethnicity, as that could indicate discrimination in the hiring process.
 
 An important issue to note before beginning our analysis is the imbalance within the data set. With the nature of the hiring process, most candidates will not be called back for an interview. Thus, the response variable is extremely imbalanced, with 4478 "no" outcomes, and only 392 "yes" outcomes. To compensate for this imbalance, the split for the testing and training data sets were lowered to a ratio of 30:70, rather than 20:80. Moreover, within the prediction models, cut-offs were also lowered to about 0.15-0.20, instead of exactly 0.5. 
 
@@ -79,13 +79,13 @@ steplin <- step(lin)
 ```{r}
 summary(steplin)
 ```
-
+As you can see, being Caucasian has a significant positive effect on getting a call back, as evidenced by the p-value of 0.006633 and a coefficient of .024606. However, it does not have as large of an impact as some other variables, such as experience and honors.
 ### Prediction
 ```{r}
 linPred <- as.factor( ifelse(predict(lin, newdata = resume_test_2, type = "response") > 0.15, "1", "0") )
 confusionMatrix(linPred, as.factor(resume_test_2$call), positive="1")
 ```
-
+This linear model that gives ethnicity weight is over 84% accurate at predicting call backs as well, further indicating that racial discrimination is prevalent and a part of the hiring process.
 ## Logistic Regression
 
 Using step function to remove insignificant variables
@@ -98,14 +98,15 @@ steplm1 <- step(lm1)
 ```{r}
 summary(steplm1)
 ```
-
+As you can see, being Caucasian has a significant positive effect on getting a call back, as evidenced by the p-value of 0.000554 and a coefficient of .44313. This is an even larger coefficient than with the linear regression, and according to this logistic regression, ethnicity plays a more significant role than even experience, indicating unfair discrimination in the hiring process.
 ### Prediction
 ```{r}
 log2pred <- ifelse(predict(steplm1, newdata = resume_test_3, type = "response") > 0.2, 1, 0)
 confusionMatrix(as.factor(log2pred), as.factor(res_test_labels))
 ```
+This logistic model that gives ethnicity such high weight is over 87% accurate at predicting call backs as well, further indicating that racial discrimination is prevalent and a part of the hiring process.
 
-## Decision Tree 
+### Decision Tree 
 
 ### Model
 ```{r}
@@ -120,7 +121,7 @@ CallPrediction <- predict(namesModel, resume_test_2)
 CrossTable(res_test_labels, CallPrediction)
 confusionMatrix(data = as.factor(CallPrediction), reference = as.factor(res_test_labels))
 ```
-
+Due to the imbalance of the data set, this model predicts that no one gets a call back, which still results in over 91% accuracy.
 ### Improved Model
 ```{r}
 improvedNamesModel <- C5.0(as.factor(callyes) ~ ethnicitycauc + citychicago + jobs + experience + honorsyes + holesyes + emailyes + specialyes + collegeyes + equalyes + reqeducyes + reqcompyes + reqorgyes + industryfinance.insurance.real.estate + industryhealth.education.social.services + industrymanufacturing + industrytrade + industrytransport.communication + industryunknown , data = resume_test_2)
@@ -131,21 +132,21 @@ improvedNamesModel <- C5.0(as.factor(callyes) ~ ethnicitycauc + citychicago + jo
 CallPrediction2 <- predict(improvedNamesModel, resume_test_2)
 confusionMatrix(data = as.factor(CallPrediction2), reference = as.factor(res_test_labels))
 ```
+Even by eliminating certain variables, the model was unchanged, indicating that it is not as valuable for this type of data set without further cleaning.
 
-## KNN
+### KNN
 
 ### Model
 ```{r}
 knum <- sqrt(nrow(resume_train))
 knn_pred <- knn(train = resume_train, test = resume_test, cl = res_train_labels, k=knum)
-#summary(resume_train)
 ```
 
 ### Prediction
 ```{r}
 caret::confusionMatrix(data = as.factor(knn_pred), reference = as.factor(res_test_labels))
 ```
-
+Exactly like the decision tree model, the KNN model predicted no call backs due to the imbalance of the data set.
 ## ANN 
 
 ### Model 1
@@ -160,7 +161,7 @@ ANN_pred <- ANN_modelresults$net.result
 resume_test_2$ANN_preds <- as.numeric(ifelse(ANN_pred > 0.20, 1, 0))
 confusionMatrix(data = as.factor(resume_test_2$ANN_preds), reference = as.factor(resume_test_2$callyes), positive = '1')
 ```
-
+This first ANN model did predict 16 call backs, and sacrificed a little accuracy to do so. While the accuracy may be lower than KNN and Decision Tree, it is more valuable than the KNN and Decision Tree models.
 ### Model 2
 ```{r}
 ANN_model2 <- neuralnet(callyes ~ ethnicitycauc + citychicago + jobs + experience + honorsyes + holesyes + emailyes + specialyes + collegeyes + equalyes + reqeducyes + reqcompyes + reqorgyes + industryfinance.insurance.real.estate + industryhealth.education.social.services + industrymanufacturing + industrytrade + industrytransport.communication + industryunknown , data = resume_train_2, hidden = 1)
@@ -173,22 +174,33 @@ ANN_pred2 <- ANN_model2results$net.result
 resume_test_2$ANN_preds <- as.numeric(ifelse(ANN_pred2 > 0.20, 1, 0))
 confusionMatrix(data = as.factor(resume_test_2$ANN_preds), reference = as.factor(resume_test_2$callyes), positive = '1')
 ```
+This ANN Model further sacrificed accuracy, but predicted many more callbacks. However, it was not very accurate with its predictions, with 129 false positives and 100 false negatives, compared to 26 true positives.
 
 ## Data Frame with Predictions
 ```{r}
+#4:1 Ratio of False Negative to False Positive
+error_cost <- matrix(c(0, 1, 4, 0), nrow = 2)
+
 comb_pred <- data.frame(knn2 = knn_pred, log2 = log2pred, ann2 = ANN_pred2, dec_tree = CallPrediction2, callyes = res_test_labels)
 test_rows_3 <- sample(1:nrow(comb_pred),0.3*nrow(comb_pred))
 resume_test_4 <- comb_pred[test_rows_3,]
 resume_train_4 <- comb_pred[-test_rows_3,]
 comb_train_labels <- comb_pred[-test_rows_3, "callyes"]
 comb_test_labels <- comb_pred[test_rows_3, "callyes"]
-tree_model_2 <- C5.0(as.factor(callyes) ~ knn2 + log2 + ann2 + dec_tree, data = resume_train_4)
+tree_model_2 <- C5.0(as.factor(callyes) ~ knn2 + log2 + ann2 + dec_tree, data = resume_train_4, cost = error_cost)
 tree_pred_2 <- predict(tree_model_2, resume_test_4)
 caret::confusionMatrix(data = as.factor(tree_pred_2), reference = as.factor(comb_test_labels))
 ```
+We combined the models to try to get the most valuable model, and even incorporated an error cost that favored false positives. However, our model still only predicted no call backs, and the data imbalance was too overpowering.
 
 ## Conclusion
 
-* List confusionmatrix summaries
-* Identify most accurate model
-* Identify and explain which variables were most significant
+There are multiple methods which have been used to deal with imbalanced data sets in the past including undersampling, oversampling, synthetic data generation, and cost sensitive learning. 
+
+In the context of the data set we are using, the two best options are undersampling and oversampling. These methods will balance the data set; undersampling reduces the observations from the majority class and oversampling replicates and, therefore, increases the observations from the majority class. 
+
+Both of these methods will allow the dependent variable “call” to have a balanced distribution of responses: yes or no.
+
+Our most valuable model with the highest Kappa value was the linear regression, with a Kappa value of .0994. According to that model, significant variables included ethnicity, experience, and honors, among others.
+
+
